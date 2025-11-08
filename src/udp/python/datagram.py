@@ -24,6 +24,10 @@ class Datagram:
     def fmt(self) -> str:
         return f"<H{self.length}s"
 
+    @property
+    def datagram_length(self) -> int:
+        return self.length + 2
+
     def to_bytes(self) -> bytes:
         return struct.pack(self.fmt, self.length, self.content)
 
