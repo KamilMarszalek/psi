@@ -21,8 +21,8 @@ def main(args):
             data = data_address[0]
             address = data_address[1]
             datagram = Datagram.from_bytes(data)
-            print("Message from client", str(address))
-            print("Received datagram", str(datagram))
+            # print("Message from client", str(address))
+            # print("Received datagram", str(datagram))
             if not data:
                 break
             s.sendto(datagram.to_bytes(), address)
