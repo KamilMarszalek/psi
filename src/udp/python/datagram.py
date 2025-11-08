@@ -11,6 +11,9 @@ class Datagram:
         if not isinstance(self.content, (bytes, bytearray)):
             raise TypeError("content must be of type bytes")
 
+        if self.length < 0:
+            raise ValueError("length cannot be negative")
+
         if len(self.content) > self.length:
             raise ValueError("content is longer than declared length")
 
