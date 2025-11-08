@@ -6,6 +6,7 @@ def test_create_datagram_0_length():
     datagram = Datagram(0, b"")
     assert datagram.length == 0
     assert datagram.content == b""
+    assert datagram.datagram_length == 2
 
 
 def test_create_datagram_negative_length():
@@ -23,3 +24,4 @@ def test_convert_datagram_to_bytes_and_back():
     datagram_bytes = original_datagram.to_bytes()
     reconstructed_datagram = Datagram.from_bytes(datagram_bytes)
     assert original_datagram == reconstructed_datagram
+    assert reconstructed_datagram.datagram_length == 7
