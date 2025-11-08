@@ -35,5 +35,6 @@ class Datagram:
     def from_bytes(cls, b: bytes):
         length = struct.unpack("<H", b[:2])[0]
         fmt = f"<H{length}s"
-        length, content = struct.unpack(fmt, b)
+        size = struct.calcsize(fmt)
+        length, content = struct.unpack(fmt, b[:size])
         return cls(length, content.rstrip(b"\x00"))
