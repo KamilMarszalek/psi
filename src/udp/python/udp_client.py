@@ -22,7 +22,7 @@ def main(args):
                 data = s.recv(datagram_to_be_sent.datagram_length)
                 received_datagram = Datagram.from_bytes(data)
                 assert received_datagram == datagram_to_be_sent
-            except Exception as e:
+            except OSError as e:
                 print(e)
                 print(datagram_to_be_sent.datagram_length)
                 break
