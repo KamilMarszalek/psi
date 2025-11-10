@@ -1,3 +1,4 @@
+#include "bytes_generator.h"
 #include "datagram.h"
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -24,26 +25,28 @@ int main() {
   server.sin_port = htons(SERVER_PORT);
   inet_pton(AF_INET, SERVER_IP, &server.sin_addr);
 
-  const char *message = "ABCDEFGHIJKLMNOPRSTUVWXYZ";
-  Datagram *d = create_datagram(strlen(message), message);
-  size_t packet_size;
-  char *packet = to_bytes(d, &packet_size);
+  for (int i = 65000; i < 66000; ++i) {
+    char *message = generate_bytes(i);
+    Datagram *d = create_datagram(i, message);
+    size_t packet_size;
+    char *packet = to_bytes(d, &packet_size);
 
-  sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)&server,
-         sizeof(server));
-  printf("Sent %zu bytes to server\n", packet_size);
+    sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)&server,
+           sizeof(server));
+    printf("Sent %zu bytes to server\n", packet_size);
 
-  ssize_t n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
-  if (n > 0) {
-    Datagram *resp = from_bytes(recv_buffer, n);
-    if (resp) {
-      printf("Received reply (%d bytes): \"%.*s\"\n", resp->length,
-             resp->length, resp->content);
-      free_datagram(resp);
+    ssize_t n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
+    if (n > 0) {
+      Datagram *resp = from_bytes(recv_buffer, n);
+      if (resp) {
+        printf("Received reply (%d bytes): \"%.*s\"\n", resp->length,
+               resp->length, resp->content);
+        free_datagram(resp);
+      }
     }
+    free(packet);
+    free_datagram(d);
   }
-  free(packet);
-  free_datagram(d);
   close(sockfd);
   return 0;
 }
