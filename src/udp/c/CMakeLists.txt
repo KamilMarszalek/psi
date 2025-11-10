@@ -8,12 +8,13 @@ set(CMAKE_C_EXTENSIONS OFF)
 add_compile_options(-Wall -Wextra -Wpedantic -g)
 
 add_library(datagram STATIC datagram.c)
+add_library(bytes_generator STATIC bytes_generator.c)
 
 add_executable(server udp_server.c)
 target_link_libraries(server PRIVATE datagram)
 
 add_executable(client udp_client.c)
-target_link_libraries(client PRIVATE datagram)
+target_link_libraries(client PRIVATE datagram bytes_generator)
 
 
 target_include_directories(server PRIVATE ${CMAKE_SOURCE_DIR})
