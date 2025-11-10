@@ -27,6 +27,10 @@ int main() {
 
   for (int i = 65000; i < 66000; ++i) {
     char *message = generate_bytes(i);
+    if (!message) {
+      perror("message generation failed");
+      exit(EXIT_FAILURE);
+    }
     Datagram *d = create_datagram(i, message);
     size_t packet_size;
     char *packet = to_bytes(d, &packet_size);
