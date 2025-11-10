@@ -4,11 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Datagram {
-  unsigned short length;
-  char *content;
-};
-
 Datagram *create_datagram(unsigned short length, const char *content) {
   Datagram *d = malloc(sizeof(Datagram));
   if (!d) {

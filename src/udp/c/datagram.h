@@ -3,7 +3,10 @@
 
 #include <stddef.h>
 
-typedef struct Datagram Datagram;
+typedef struct {
+  unsigned short length;
+  char *content;
+} Datagram;
 
 Datagram *create_datagram(unsigned short length, const char *content);
 void free_datagram(Datagram *d);
