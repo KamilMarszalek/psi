@@ -22,7 +22,7 @@ class Datagram:
 
     @property
     def fmt(self) -> str:
-        return f"<H{self.length}s"
+        return f"!H{self.length}s"
 
     @property
     def datagram_length(self) -> int:
@@ -33,8 +33,8 @@ class Datagram:
 
     @classmethod
     def from_bytes(cls, b: bytes):
-        length = struct.unpack("<H", b[:2])[0]
-        fmt = f"<H{length}s"
+        length = struct.unpack("!H", b[:2])[0]
+        fmt = f"!H{length}s"
         size = struct.calcsize(fmt)
         length, content = struct.unpack(fmt, b[:size])
         return cls(length, content.rstrip(b"\x00"))
