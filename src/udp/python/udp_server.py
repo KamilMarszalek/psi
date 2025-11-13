@@ -2,7 +2,7 @@ import socket
 import sys
 from datagram import Datagram
 
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 BUFSIZE = 1048576
 
 
