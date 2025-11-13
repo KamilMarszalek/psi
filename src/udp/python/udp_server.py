@@ -8,14 +8,16 @@ BUFSIZE = 1048576
 
 def main(args):
     if len(args) < 2:
-        print("default port 8000")
-        port = 8000
+        print("no port passed efemeric port will be given")
+        port = 0
     else:
         port = int(args[1])
     print("Will listen on", HOST, ":", port)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind((HOST, port))
+        if not port:
+            print("Port", s.getsockname()[1])
         while True:
             data_address = s.recvfrom(BUFSIZE)
             data = data_address[0]
