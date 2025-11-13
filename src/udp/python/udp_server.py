@@ -18,16 +18,20 @@ def main(args):
         s.bind((HOST, port))
         if not port:
             print("Port", s.getsockname()[1])
-        while True:
-            data_address = s.recvfrom(BUFSIZE)
-            data = data_address[0]
-            address = data_address[1]
-            datagram = Datagram.from_bytes(data)
-            # print("Message from client", str(address))
-            # print("Received datagram", str(datagram))
-            if not data:
-                break
-            s.sendto(datagram.to_bytes(), address)
+        echo(s)
+
+
+def echo(s: socket.socket):
+    while True:
+        data_address = s.recvfrom(BUFSIZE)
+        data = data_address[0]
+        address = data_address[1]
+        datagram = Datagram.from_bytes(data)
+        print("Message from client", str(address))
+        print("Received datagram", str(datagram))
+        if not data:
+            break
+        s.sendto(datagram.to_bytes(), address)
 
 
 if __name__ == "__main__":
