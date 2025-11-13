@@ -12,12 +12,10 @@ def main(args):
         port = 0
     else:
         port = int(args[1])
-    print("Will listen on", HOST, ":", port)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind((HOST, port))
-        if not port:
-            print("Port", s.getsockname()[1])
+        print("Will listen on", s.getsockname()[0], ":", s.getsockname()[1])
         echo(s)
 
 
@@ -27,8 +25,8 @@ def echo(s: socket.socket):
         data = data_address[0]
         address = data_address[1]
         datagram = Datagram.from_bytes(data)
-        print("Message from client", str(address))
-        print("Received datagram", str(datagram))
+        # print("Message from client", str(address))
+        # print("Received datagram", str(datagram))
         if not data:
             break
         s.sendto(datagram.to_bytes(), address)

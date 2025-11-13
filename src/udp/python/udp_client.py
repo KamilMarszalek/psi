@@ -32,7 +32,7 @@ def send_test_datagrams(
             data = s.recv(datagram_to_be_sent.datagram_length)
             received_datagram = Datagram.from_bytes(data)
             assert received_datagram == datagram_to_be_sent
-            print("datagram length", received_datagram.length + 2)
+            # print("datagram length", received_datagram.length + 2)
         except OSError as e:
             print(e)
             print(datagram_to_be_sent.datagram_length)
