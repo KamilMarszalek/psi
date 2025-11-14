@@ -1,0 +1,8 @@
+FROM gcc:14
+
+RUN apt-get update && apt-get install -y cmake
+
+WORKDIR /cserver
+COPY . .
+RUN mkdir build && cd build && cmake .. && make
+ENTRYPOINT ["./build/client"]
