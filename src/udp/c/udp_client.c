@@ -35,8 +35,11 @@ int main() {
     size_t packet_size;
     char *packet = to_bytes(d, &packet_size);
 
-    sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)&server,
-           sizeof(server));
+    if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)&server,
+               sizeof(server)) < 0) {
+      fprintf(stderr, "failed to send datagram (length=%d)\n", d->length + 2);
+      exit(EXIT_FAILURE);
+    }
     printf("Sent %zu bytes to server\n", packet_size);
 
     ssize_t n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
