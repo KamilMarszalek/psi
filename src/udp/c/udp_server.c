@@ -8,7 +8,13 @@
 #define PORT 8000
 #define BUFFER_SIZE (1 << 16) - 1
 
-int main() {
+int main(int argc, char *argv[]) {
+  int port = 0;
+  if (argc < 2) {
+    printf("no port provided, efemeric port will be given\n");
+  } else {
+    port = atoi(argv[1]);
+  }
   int sockfd;
   struct sockaddr_in server, client;
   socklen_t client_len = sizeof(client);
@@ -22,15 +28,20 @@ int main() {
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
   server.sin_addr.s_addr = INADDR_ANY;
-  server.sin_port = htons(PORT);
+  server.sin_port = htons(port);
 
   if (bind(sockfd, (const struct sockaddr *)&server, sizeof(server)) < 0) {
     perror("bind failed");
     close(sockfd);
     exit(EXIT_FAILURE);
   }
-
-  printf("UDP server listening on port %d...\n", PORT);
+  socklen_t length = sizeof(server);
+  if (getsockname(sockfd, (struct sockaddr *)&server, &length) < 0) {
+    perror("failed to get socket data");
+    exit(EXIT_FAILURE);
+  }
+  port = server.sin_port;
+  printf("UDP server listening on port %d...\n", port);
   while (1) {
     ssize_t n = recvfrom(sockfd, buffer, BUFFER_SIZE, 0,
                          (struct sockaddr *)&client, &client_len);
