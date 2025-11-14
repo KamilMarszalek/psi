@@ -5,38 +5,63 @@ from bytes_generator import get_bytes
 
 HOST = "127.0.0.1"
 PORT = 8000
+DEFAULT_START = 65000
+DEFAULT_STOP = 66000
+DEFAULT_STEP = 1
+
+
+def parse_args(args):
+    if len(args) < 3:
+        print(f"default host: {HOST}")
+        print(f"default port: {PORT}")
+        return HOST, PORT
+
+    return args[1], int(args[2])
+
+
+def create_udp_socket():
+    return socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+
+def send_one_datagram(sock, host, port, length):
+    """Send one datagram and return received datagram (or None)."""
+    outgoing = Datagram(length, get_bytes(length))
+    outgoing_bytes = outgoing.to_bytes()
+
+    sock.sendto(outgoing_bytes, (host, port))
+    data, _ = sock.recvfrom(outgoing.datagram_length)
+
+    incoming = Datagram.from_bytes(data)
+
+    if incoming != outgoing:
+        raise ValueError("Received datagram mismatch!")
+
+    return incoming
+
+
+def run_test_datagrams(sock, host, port, start, stop, step):
+    for length in range(start, stop, step):
+        try:
+            send_one_datagram(sock, host, port, length)
+            # print(f"OK len={length}")
+        except Exception as e:
+            print("ERROR at length", length, "->", e)
+            break
 
 
 def main(args):
-    if len(args) < 3:
-        print("default host:", HOST)
-        print("default port", PORT)
-        port = PORT
-        host = HOST
-    else:
-        host = args[1]
-        port = int(args[2])
-    print("Will send to ", host, ":", port)
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        send_test_datagrams(s, host, port, 65000, 66000, 1)
+    host, port = parse_args(args)
+    print("Will send to", host, ":", port)
 
-
-def send_test_datagrams(
-    s: socket.socket, host: str, port: int, start: int, stop: int, step: int
-):
-    for i in range(start, stop, step):
-        try:
-            datagram_to_be_sent = Datagram(i, get_bytes(i))
-            stream_data = datagram_to_be_sent.to_bytes()
-            s.sendto(stream_data, (host, port))
-            data = s.recv(datagram_to_be_sent.datagram_length)
-            received_datagram = Datagram.from_bytes(data)
-            assert received_datagram == datagram_to_be_sent
-            # print("datagram length", received_datagram.length + 2)
-        except OSError as e:
-            print(e)
-            print(datagram_to_be_sent.datagram_length)
-            break
+    with create_udp_socket() as sock:
+        run_test_datagrams(
+            sock,
+            host,
+            port,
+            DEFAULT_START,
+            DEFAULT_STOP,
+            DEFAULT_STEP,
+        )
 
 
 if __name__ == "__main__":

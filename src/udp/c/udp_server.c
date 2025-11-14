@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #define BUFFER_SIZE ((1 << 16) - 1)
+#define RESP_CONTENT "ACK"
 
 int parse_port(int argc, char **argv) {
   if (argc < 2) {
