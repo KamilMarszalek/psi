@@ -56,6 +56,7 @@ void handle_echo(int sockfd) {
   char buffer[BUFFER_SIZE];
   struct sockaddr_in client;
   socklen_t client_len = sizeof(client);
+
   ssize_t n = recvfrom(sockfd, buffer, BUFFER_SIZE, 0,
                        (struct sockaddr *)&client, &client_len);
 
@@ -70,12 +71,24 @@ void handle_echo(int sockfd) {
     return;
   }
 
-  printf("Received datagram (%d bytes): \"%.*s\"\n", d->length, d->length,
-         d->content);
+  printf("Received datagram (seq_bit=%u, %d bytes): \"%.*s\"\n", d->seq_bit,
+         d->length, d->length, d->content);
+
+  Datagram *ack =
+      create_datagram(d->seq_bit, sizeof(RESP_CONTENT) - 1, RESP_CONTENT);
+
   size_t out_size;
-  char *reply = to_bytes(d, &out_size);
-  sendto(sockfd, reply, out_size, 0, (struct sockaddr *)&client, client_len);
+  char *reply = to_bytes(ack, &out_size);
+
+  if (sendto(sockfd, reply, out_size, 0, (struct sockaddr *)&client,
+             client_len) < 0) {
+    perror("sendto failed");
+  } else {
+    printf("Sent ACK with seq_bit=%u\n", ack->seq_bit);
+  }
+
   free(reply);
+  free_datagram(ack);
   free_datagram(d);
 }
 

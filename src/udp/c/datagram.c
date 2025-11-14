@@ -4,13 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-Datagram *create_datagram(unsigned short length, const char *content) {
+Datagram *create_datagram(unsigned char seq_bit, unsigned short length,
+                          const char *content) {
   Datagram *d = malloc(sizeof(Datagram));
   if (!d) {
     fprintf(stderr, "Failed to allocate Datagram\n");
     return NULL;
   }
 
+  d->seq_bit = seq_bit & 1;
   d->length = length;
   d->content = malloc(length);
   if (!d->content) {
@@ -37,15 +39,23 @@ char *to_bytes(const Datagram *d, size_t *out_size) {
     return NULL;
   }
 
-  *out_size = sizeof(unsigned short) + d->length;
+  *out_size = sizeof(unsigned char) + sizeof(unsigned short) + d->length;
   char *buffer = malloc(*out_size);
+
   if (!buffer) {
     return NULL;
   }
-  unsigned short net_length = htons(d->length);
-  memcpy(buffer, &net_length, sizeof(unsigned short));
 
-  memcpy(buffer + sizeof(unsigned short), d->content, d->length);
+  size_t offset = 0;
+
+  buffer[offset] = d->seq_bit;
+  offset += sizeof(unsigned char);
+
+  unsigned short net_length = htons(d->length);
+  memcpy(buffer + offset, &net_length, sizeof(unsigned short));
+  offset += sizeof(unsigned short);
+
+  memcpy(buffer + offset, d->content, d->length);
 
   return buffer;
 }
@@ -56,14 +66,22 @@ Datagram *from_bytes(const char *bytes, size_t size) {
     return NULL;
   }
 
-  unsigned short net_length;
-  memcpy(&net_length, bytes, sizeof(unsigned short));
-  unsigned short length = ntohs(net_length);
+  size_t offset = 0;
 
-  if (size < sizeof(unsigned short) + length) {
+  unsigned char seq_bit = bytes[offset];
+  offset += sizeof(unsigned char);
+
+  unsigned short net_length;
+  memcpy(&net_length, bytes + offset, sizeof(unsigned short));
+  unsigned short length = ntohs(net_length);
+  offset += sizeof(unsigned short);
+
+  if (size < offset + length) {
     fprintf(stderr, "Incomplete datagram\n");
     return NULL;
   }
-  const char *content = bytes + sizeof(unsigned short);
-  return create_datagram(length, content);
+
+  const char *content = bytes + offset;
+
+  return create_datagram(seq_bit, length, content);
 }

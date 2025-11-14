@@ -13,6 +13,7 @@
 
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE ((1 << 16) - 1)
+#define MSG_LEN 512
 
 void parse_args(int argc, char **argv, char **host, int *port) {
   if (argc < 3) {
@@ -70,7 +71,8 @@ void resolve_host(const char *host, int port, struct sockaddr_in *server) {
   exit(EXIT_FAILURE);
 }
 
-void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
+void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
+                      unsigned char seq_bit) {
   char recv_buffer[BUFFER_SIZE];
 
   char *message = generate_bytes(msg_len);
@@ -79,7 +81,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
     exit(EXIT_FAILURE);
   }
 
-  Datagram *d = create_datagram(msg_len, message);
+  Datagram *d = create_datagram(seq_bit, msg_len, message);
 
   size_t packet_size;
   char *packet = to_bytes(d, &packet_size);
@@ -114,8 +116,16 @@ int main(int argc, char *argv[]) {
   struct sockaddr_in server;
   resolve_host(host, port, &server);
 
-  for (int i = 65000; i < 66000; ++i) {
-    send_and_receive(sockfd, &server, i);
+  unsigned char seq_bit = 0;
+  int num_packets = 10;
+
+  for (int i = 0; i < num_packets; ++i) {
+    printf("Sending packet %d/%d with seq_bit=%u\n", i + 1, num_packets,
+           seq_bit);
+
+    send_and_receive(sockfd, &server, MSG_LEN, seq_bit);
+
+    seq_bit = 1 - seq_bit;
   }
 
   close(sockfd);
