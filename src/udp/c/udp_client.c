@@ -14,6 +14,8 @@
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE ((1 << 16) - 1)
 #define MSG_LEN 512
+#define TIMEOUT_SEC 0       // seconds
+#define TIMEOUT_USEC 750000 // microseconds
 
 void parse_args(int argc, char **argv, char **host, int *port) {
   if (argc < 3) {
@@ -115,6 +117,11 @@ int main(int argc, char *argv[]) {
 
   struct sockaddr_in server;
   resolve_host(host, port, &server);
+
+  struct timeval tv;
+  tv.tv_sec = TIMEOUT_SEC;
+  tv.tv_usec = TIMEOUT_USEC;
+  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   unsigned char seq_bit = 0;
   int num_packets = 10;
