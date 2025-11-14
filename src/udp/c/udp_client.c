@@ -10,11 +10,21 @@
 #define SERVER_PORT 8000
 #define BUFFER_SIZE (1 << 16) - 1
 
-int main() {
+int main(int argc, char *argv[]) {
+  char *host;
+  int port;
   int sockfd;
   struct sockaddr_in server;
   char recv_buffer[BUFFER_SIZE];
-
+  if (argc < 3) {
+    printf("default host %s\n", SERVER_IP);
+    host = SERVER_IP;
+    printf("efemeric port will be given\n");
+    port = 0;
+  } else {
+    host = argv[1];
+    port = atoi(argv[2]);
+  }
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sockfd < 0) {
     perror("socket creation failed");
@@ -22,8 +32,11 @@ int main() {
   }
   memset(&server, 0, sizeof(server));
   server.sin_family = AF_INET;
-  server.sin_port = htons(SERVER_PORT);
-  inet_pton(AF_INET, SERVER_IP, &server.sin_addr);
+  server.sin_port = htons(port);
+  if (inet_pton(AF_INET, host, &server.sin_addr) <= 0) {
+    fprintf(stderr, "Invalid IPv4 address: %s\n", host);
+    exit(EXIT_FAILURE);
+  };
 
   for (int i = 65000; i < 66000; ++i) {
     char *message = generate_bytes(i);

@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     perror("failed to get socket data");
     exit(EXIT_FAILURE);
   }
-  port = server.sin_port;
+  port = ntohs(server.sin_port);
   printf("UDP server listening on port %d...\n", port);
   while (1) {
     ssize_t n = recvfrom(sockfd, buffer, BUFFER_SIZE, 0,
