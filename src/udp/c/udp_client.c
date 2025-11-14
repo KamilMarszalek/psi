@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include "bytes_generator.h"
 #include "datagram.h"
+#include <errno.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -87,20 +88,74 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
 
   size_t packet_size;
   char *packet = to_bytes(d, &packet_size);
+  if (!packet) {
+    perror("to_bytes failed");
+    free_datagram(d);
+    exit(EXIT_FAILURE);
+  }
 
   if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)server,
              sizeof(*server)) < 0) {
-    fprintf(stderr, "failed to send datagram (length=%d)\n", d->length + 2);
+    perror("failed to send datagram");
+    free(packet);
+    free_datagram(d);
     exit(EXIT_FAILURE);
   }
-  ssize_t n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
-  if (n > 0) {
-    Datagram *resp = from_bytes(recv_buffer, n);
-    if (resp) {
-      printf("Received reply (%d bytes): \"%.*s\"\n", resp->length,
-             resp->length, resp->content);
-      free_datagram(resp);
+
+  printf("sent datagram with seq_bit: %u\n", seq_bit);
+
+  Datagram *resp = NULL;
+  ssize_t n;
+
+  while (1) {
+    n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
+
+    if (n < 0) {
+      if (errno == EAGAIN) {
+        printf("Timeout, resending datagram with seq_bit: '%u'\n", seq_bit);
+
+        if (sendto(sockfd, packet, packet_size, 0,
+                   (const struct sockaddr *)server, sizeof(*server)) < 0) {
+          free(packet);
+          free_datagram(d);
+          exit(EXIT_FAILURE);
+        }
+        continue;
+      } else {
+        perror("recvfrom failed");
+        break;
+      }
     }
+
+    resp = from_bytes(recv_buffer, n);
+    if (!resp) {
+      fprintf(stderr, "failed to parse response\n");
+      continue;
+    }
+
+    if (resp->seq_bit == seq_bit) {
+      printf("received correct ACK(%u)\n", resp->seq_bit);
+      break;
+    } else {
+      printf("wrong ACK (expected %u, got %u), resending\n", seq_bit,
+             resp->seq_bit);
+      free_datagram(resp);
+      resp = NULL;
+
+      if (sendto(sockfd, packet, packet_size, 0,
+                 (const struct sockaddr *)server, sizeof(*server)) < 0) {
+        perror("failed to resend datagram");
+        free(packet);
+        free_datagram(d);
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+
+  if (resp) {
+    printf("Received reply (seq_bit %u, %d bytes): \"%.*s\"\n", resp->seq_bit,
+           resp->length, resp->length, resp->content);
+    free_datagram(resp);
   }
 
   free(packet);
