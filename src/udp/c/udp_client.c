@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
   setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   unsigned char seq_bit = 0;
-  unsigned short packet_count = 20000;
+  unsigned short packet_count = 30;
 
   for (unsigned short i = 0; i < packet_count; ++i) {
     if (stop_requested) {
