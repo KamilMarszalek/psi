@@ -9,11 +9,11 @@
 static void node_serialize(const node_t* node, buffer_t* buf);
 static size_t node_size_serialized(const node_t* node);
 
-node_t* node_new(int16_t small_number, int32_t normal_number, const char* text) {
+node_t* node_new(int16_t number16, int32_t number32, const char* text) {
   node_t* node = malloc(sizeof(node_t));
   node->left = node->right = nullptr;
-  node->number16 = small_number;
-  node->number32 = normal_number;
+  node->number16 = number16;
+  node->number32 = number32;
   node->text_length = strlen(text) + 1;
   node->text = strdup(text);
   return node;
