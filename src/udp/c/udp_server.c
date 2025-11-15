@@ -71,7 +71,7 @@ void handle_echo(int sockfd) {
     return;
   }
 
-  printf("Received datagram (seq_bit=%u, %d bytes): \"%.*s\"\n", d->seq_bit,
+  printf("\nReceived datagram (seq_bit=%u, %d bytes): \"%.*s\"\n", d->seq_bit,
          d->length, d->length, d->content);
 
   Datagram *ack =
@@ -84,7 +84,7 @@ void handle_echo(int sockfd) {
              client_len) < 0) {
     perror("sendto failed");
   } else {
-    printf("Sent ACK with seq_bit=%u\n", ack->seq_bit);
+    printf("\nSent ACK with seq_bit=%u\n", ack->seq_bit);
   }
 
   free(reply);

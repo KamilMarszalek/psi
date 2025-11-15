@@ -102,7 +102,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
     exit(EXIT_FAILURE);
   }
 
-  printf("sent datagram with seq_bit: %u\n", seq_bit);
+  printf("Sent datagram with seq_bit: %u\n", seq_bit);
 
   Datagram *resp = NULL;
   ssize_t n;
@@ -134,10 +134,10 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
     }
 
     if (resp->seq_bit == seq_bit) {
-      printf("received correct ACK(%u)\n", resp->seq_bit);
+      printf("Received correct ACK(%u)\n", resp->seq_bit);
       break;
     } else {
-      printf("wrong ACK (expected %u, got %u), resending\n", seq_bit,
+      printf("Wrong ACK (expected %u, got %u), resending\n", seq_bit,
              resp->seq_bit);
       free_datagram(resp);
       resp = NULL;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
   int num_packets = 10;
 
   for (int i = 0; i < num_packets; ++i) {
-    printf("Sending packet %d/%d with seq_bit=%u\n", i + 1, num_packets,
+    printf("\nSending packet %d/%d with seq_bit=%u\n", i + 1, num_packets,
            seq_bit);
 
     send_and_receive(sockfd, &server, MSG_LEN, seq_bit);
