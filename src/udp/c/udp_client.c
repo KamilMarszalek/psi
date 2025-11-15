@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
     seq_bit = 1 - seq_bit;
   }
 
-  printf("\nShutdown requested");
+  printf("\nShutdown requested\n");
   printf("Total sent packets: %d\n", (int)total_packets);
   printf("Successfuly sent packets: %d\n", (int)successful_packets);
 
