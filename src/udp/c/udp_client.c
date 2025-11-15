@@ -19,9 +19,9 @@
 #define TIMEOUT_SEC 0       // seconds
 #define TIMEOUT_USEC 750000 // microseconds
 
-static volatile sig_atomic_t stop_requested = 0;
-static volatile sig_atomic_t successful_packets = 0;
-static volatile sig_atomic_t total_packets = 0;
+int stop_requested = 0;
+int successful_packets = 0;
+int total_packets = 0;
 
 static void on_signal(int signo) {
   (void)signo;
@@ -211,9 +211,8 @@ int main(int argc, char *argv[]) {
     seq_bit = 1 - seq_bit;
   }
 
-  printf("\nShutdown requested");
-  printf("Total sent packets: %d\n", (int)total_packets);
-  printf("Successfuly sent packets: %d\n", (int)successful_packets);
+  printf("\nTotal sent packets: %d\n", total_packets);
+  printf("Successfuly sent packets: %d\n", successful_packets);
 
   close(sockfd);
   return 0;
