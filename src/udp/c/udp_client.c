@@ -196,15 +196,18 @@ int main(int argc, char *argv[]) {
   setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   unsigned char seq_bit = 0;
-  unsigned int packet_num = 1;
+  int packet_count = 200000;
 
-  while (!stop_requested) {
-    printf("\nSending packet %d with seq_bit=%u\n", packet_num, seq_bit);
+  for (int i = 0; i < packet_count; ++i) {
+    if (stop_requested) {
+      break;
+    }
+
+    printf("\nSending packet %d with seq_bit=%u\n", i + 1, seq_bit);
 
     send_and_receive(sockfd, &server, MSG_LEN, seq_bit);
 
     seq_bit = 1 - seq_bit;
-    packet_num = packet_num % 100 + 1;
   }
 
   printf("\nShutdown requested");
