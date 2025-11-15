@@ -1,6 +1,8 @@
 #include "binary_tree.h"
+#include "buffer.h"
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -31,11 +33,14 @@ int main(int argc, char* argv[]) {
   node_t* root = node_new(1, 10, "a");
   root->left = node_new(2, 20, "ab");
   root->right = node_new(3, 30, "abc");
+  size_t tree_size = tree_calc_serialized_size(root);
+  printf("tree_size: %zu", tree_size);
 
-  if (tree_send_preorder(sock, root) == -1) {
-    perror("sending nodes over socket");
-    exit(EXIT_FAILURE);
-  }
+  uint8_t data[tree_size];
+
+  buffer_t buf = {.data = data, .length = 0};
+
+  tree_serialize_preorder(root, &buf);
 
   tree_free(root);
   close(sock);

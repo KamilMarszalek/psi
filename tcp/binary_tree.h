@@ -1,6 +1,8 @@
 #ifndef BINARY_TREE_H
 #define BINARY_TREE_H
 
+#include "buffer.h"
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct Node {
@@ -14,7 +16,8 @@ typedef struct Node {
 
 
 node_t* node_new(int16_t number16, int32_t number32, const char* text);
-int tree_send_preorder(int sock, const node_t* root);
+size_t tree_calc_serialized_size(const node_t* root);
+void tree_serialize_preorder(const node_t* root, buffer_t* buf);
 void tree_free(node_t* root);
 
 #endif
