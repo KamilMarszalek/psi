@@ -85,7 +85,7 @@ void resolve_host(const char *host, int port, struct sockaddr_in *server) {
 }
 
 void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
-                      unsigned char seq_bit) {
+                      unsigned char seq_bit, unsigned short packet_num) {
   char recv_buffer[BUFFER_SIZE];
 
   char *message = generate_bytes(msg_len);
@@ -94,7 +94,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
     exit(EXIT_FAILURE);
   }
 
-  Datagram *d = create_datagram(seq_bit, msg_len, message);
+  Datagram *d = create_datagram(seq_bit, packet_num, msg_len, message);
 
   size_t packet_size;
   char *packet = to_bytes(d, &packet_size);
@@ -145,13 +145,13 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
       continue;
     }
 
-    if (resp->seq_bit == seq_bit) {
-      printf("Received correct ACK(%u)\n", resp->seq_bit);
+    if (resp->header.seq_bit == seq_bit) {
+      printf("Received correct ACK(%u)\n", resp->header.seq_bit);
       ++successful_packets;
       break;
     } else {
       printf("Wrong ACK (expected %u, got %u), resending\n", seq_bit,
-             resp->seq_bit);
+             resp->header.seq_bit);
       free_datagram(resp);
       resp = NULL;
 
@@ -167,8 +167,9 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
   }
 
   if (resp) {
-    printf("Received reply (seq_bit %u, %d bytes): \"%.*s\"\n", resp->seq_bit,
-           resp->length, resp->length, resp->content);
+    printf("Received reply (seq_bit %u, packet_num: %d): \"%.*s\"\n",
+           resp->header.seq_bit, resp->header.packet_num, resp->length,
+           resp->content);
     free_datagram(resp);
   }
 
@@ -196,16 +197,16 @@ int main(int argc, char *argv[]) {
   setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   unsigned char seq_bit = 0;
-  int packet_count = 200000;
+  unsigned short packet_count = 20000;
 
-  for (int i = 0; i < packet_count; ++i) {
+  for (unsigned short i = 0; i < packet_count; ++i) {
     if (stop_requested) {
       break;
     }
 
     printf("\nSending packet %d with seq_bit=%u\n", i + 1, seq_bit);
 
-    send_and_receive(sockfd, &server, MSG_LEN, seq_bit);
+    send_and_receive(sockfd, &server, MSG_LEN, seq_bit, i + 1);
 
     seq_bit = 1 - seq_bit;
   }

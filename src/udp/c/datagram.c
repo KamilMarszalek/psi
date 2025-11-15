@@ -4,15 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-Datagram *create_datagram(unsigned char seq_bit, unsigned short length,
-                          const char *content) {
+Datagram *create_datagram(unsigned char seq_bit, unsigned short packet_num,
+                          unsigned short length, const char *content) {
   Datagram *d = malloc(sizeof(Datagram));
   if (!d) {
     fprintf(stderr, "Failed to allocate Datagram\n");
     return NULL;
   }
 
-  d->seq_bit = seq_bit & 1;
+  d->header.seq_bit = seq_bit & 1;
+  d->header.packet_num = packet_num;
   d->length = length;
   d->content = malloc(length);
   if (!d->content) {
@@ -39,7 +40,7 @@ char *to_bytes(const Datagram *d, size_t *out_size) {
     return NULL;
   }
 
-  *out_size = sizeof(unsigned char) + sizeof(unsigned short) + d->length;
+  *out_size = sizeof(unsigned char) + 2 * sizeof(unsigned short) + +d->length;
   char *buffer = malloc(*out_size);
 
   if (!buffer) {
@@ -48,12 +49,16 @@ char *to_bytes(const Datagram *d, size_t *out_size) {
 
   size_t offset = 0;
 
-  buffer[offset] = d->seq_bit;
+  buffer[offset] = d->header.seq_bit;
   offset += sizeof(unsigned char);
 
+  unsigned short net_pkt = htons(d->header.packet_num);
+  memcpy(buffer + offset, &net_pkt, sizeof(net_pkt));
+  offset += sizeof(net_pkt);
+
   unsigned short net_length = htons(d->length);
-  memcpy(buffer + offset, &net_length, sizeof(unsigned short));
-  offset += sizeof(unsigned short);
+  memcpy(buffer + offset, &net_length, sizeof(net_length));
+  offset += sizeof(net_length);
 
   memcpy(buffer + offset, d->content, d->length);
 
@@ -71,10 +76,15 @@ Datagram *from_bytes(const char *bytes, size_t size) {
   unsigned char seq_bit = bytes[offset];
   offset += sizeof(unsigned char);
 
+  unsigned short net_pkt;
+  memcpy(&net_pkt, bytes + offset, sizeof(unsigned short));
+  unsigned short packet_num = ntohs(net_pkt);
+  offset += sizeof(net_pkt);
+
   unsigned short net_length;
   memcpy(&net_length, bytes + offset, sizeof(unsigned short));
   unsigned short length = ntohs(net_length);
-  offset += sizeof(unsigned short);
+  offset += sizeof(net_length);
 
   if (size < offset + length) {
     fprintf(stderr, "Incomplete datagram\n");
@@ -83,5 +93,5 @@ Datagram *from_bytes(const char *bytes, size_t size) {
 
   const char *content = bytes + offset;
 
-  return create_datagram(seq_bit, length, content);
+  return create_datagram(seq_bit, packet_num, length, content);
 }

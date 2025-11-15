@@ -80,11 +80,11 @@ void handle_echo(int sockfd) {
     return;
   }
 
-  printf("\nReceived datagram (seq_bit=%u, %d bytes): \"%.*s\"\n", d->seq_bit,
-         d->length, d->length, d->content);
+  printf("\nReceived datagram (seq_bit=%u, packet_num=%d): \"%.*s\"\n",
+         d->header.seq_bit, d->header.packet_num, d->length, d->content);
 
-  Datagram *ack =
-      create_datagram(d->seq_bit, sizeof(RESP_CONTENT) - 1, RESP_CONTENT);
+  Datagram *ack = create_datagram(d->header.seq_bit, d->header.packet_num,
+                                  sizeof(RESP_CONTENT) - 1, RESP_CONTENT);
 
   size_t out_size;
   char *reply = to_bytes(ack, &out_size);
@@ -93,7 +93,8 @@ void handle_echo(int sockfd) {
              client_len) < 0) {
     perror("sendto failed");
   } else {
-    printf("\nSent ACK with seq_bit=%u\n", ack->seq_bit);
+    printf("\nSent ACK with seq_bit=%u for packet_num=%d\n",
+           ack->header.seq_bit, ack->header.packet_num);
     ++total_packets;
   }
 
