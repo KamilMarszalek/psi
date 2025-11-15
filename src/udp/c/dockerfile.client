@@ -1,6 +1,6 @@
 FROM gcc:14
 
-RUN apt-get update && apt-get install -y cmake
+RUN apt-get update && apt-get install -y cmake iproute2
 
 WORKDIR /cserver
 COPY . .
