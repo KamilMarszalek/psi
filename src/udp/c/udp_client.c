@@ -179,15 +179,15 @@ int main(int argc, char *argv[]) {
   setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   unsigned char seq_bit = 0;
-  int num_packets = 10;
+  unsigned int packet_num = 1;
 
-  for (int i = 0; i < num_packets; ++i) {
-    printf("\nSending packet %d/%d with seq_bit=%u\n", i + 1, num_packets,
-           seq_bit);
+  while (1) {
+    printf("\nSending packet %d with seq_bit=%u\n", packet_num, seq_bit);
 
     send_and_receive(sockfd, &server, MSG_LEN, seq_bit);
 
     seq_bit = 1 - seq_bit;
+    packet_num = packet_num % 100 + 1;
   }
 
   close(sockfd);
