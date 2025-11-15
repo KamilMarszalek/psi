@@ -1,0 +1,32 @@
+services:
+  pserver:
+    build:
+      context: .
+      dockerfile: dockerfile.server
+    image: z11_pserver_udp
+    container_name: z11_pserver_udp
+    hostname: pserver
+    networks:
+      z11_network:
+        aliases:
+          - pserver
+    command: ["python3", "udp_server.py", "8000"]
+
+  pclient:
+    build:
+      context: .
+      dockerfile: dockerfile.client
+    image: z11_pclient_udp
+    container_name: z11_pclient_udp
+    hostname: pclient
+    networks:
+      z11_network:
+        aliases:
+          - pclient
+    command: ["python3", "udp_client.py", "pserver", "8000"]
+    depends_on:
+      - pserver
+
+networks:
+  z11_network:
+    external: true
