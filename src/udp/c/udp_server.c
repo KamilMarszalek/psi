@@ -1,5 +1,6 @@
 #include "datagram.h"
 #include <arpa/inet.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,14 @@
 
 #define BUFFER_SIZE ((1 << 16) - 1)
 #define RESP_CONTENT "ACK"
+
+static volatile sig_atomic_t stop_requested = 0;
+static volatile sig_atomic_t total_packets = 0;
+
+static void on_signal(int signo) {
+  (void)signo;
+  stop_requested = 1;
+}
 
 int parse_port(int argc, char **argv) {
   if (argc < 2) {
@@ -85,6 +94,7 @@ void handle_echo(int sockfd) {
     perror("sendto failed");
   } else {
     printf("\nSent ACK with seq_bit=%u\n", ack->seq_bit);
+    ++total_packets;
   }
 
   free(reply);
@@ -96,14 +106,21 @@ int main(int argc, char *argv[]) {
   int port = parse_port(argc, argv);
   int sockfd = create_udp_socket();
 
+  signal(SIGINT, on_signal);
+  signal(SIGTERM, on_signal);
+
   bind_udp_socket(sockfd, port);
 
   int real_port = get_bound_port(sockfd);
   printf("UDP server listening on port %d...\n", real_port);
 
-  while (1) {
+  while (!stop_requested) {
     handle_echo(sockfd);
   }
+
+  printf("\nShutdown requested. Total received packets with confirmation "
+         "response: %d\n",
+         (int)total_packets);
 
   close(sockfd);
   return 0;
