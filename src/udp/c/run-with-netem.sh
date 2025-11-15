@@ -21,7 +21,7 @@ echo ""
 
 cleanup() {
     echo ""
-    echo "Stopping containers and cleaning up..."
+    echo "Stopping containers and cleaning up"
 
     kill $(jobs -p) 2>/dev/null
 
@@ -32,13 +32,16 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-echo "Starting containers..."
-docker-compose -f docker-compose.c.yml up --build -d
+echo "Building containers"
+docker-compose -f docker-compose.c.yml build
 
-sleep 2
+sleep 1
 
-echo "Applying netem to cserver..."
+echo "Applying netem to cserver"
 docker exec z11_cserver_udp tc qdisc add dev eth0 root netem delay $DELAY $JITTER loss $LOSS
+
+echo "Starting containers"
+docker-compose -f docker-compose.c.yml up -d
 
 echo ""
 echo "Network conditions applied!"

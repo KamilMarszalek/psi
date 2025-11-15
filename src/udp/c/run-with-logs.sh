@@ -2,7 +2,7 @@
 
 cleanup() {
     echo ""
-    echo "Stopping containers and cleaning up..."
+    echo "Stopping containers and cleaning up"
 
     kill $(jobs -p) 2>/dev/null
 
