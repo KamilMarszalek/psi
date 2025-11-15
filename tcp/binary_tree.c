@@ -50,6 +50,10 @@ void tree_free(node_t* root) {
   free(root);
 }
 
+size_t node_size_serialized(const node_t* node) {
+  return sizeof(node->text_length) + sizeof(node->number32) + sizeof(node->number16) + sizeof(char) * node->text_length;
+}
+
 void node_serialize(const node_t* node, buffer_t* buf) {
   uint32_t text_length_n = htonl(node->text_length);
   uint32_t number32_n = htonl(node->number32);
@@ -58,8 +62,4 @@ void node_serialize(const node_t* node, buffer_t* buf) {
   buffer_write_bytes(buf, &number32_n, sizeof(number32_n));
   buffer_write_bytes(buf, &number16_n, sizeof(number16_n));
   buffer_write_bytes(buf, node->text, sizeof(char) * node->text_length);
-}
-
-size_t node_size_serialized(const node_t* node) {
-  return sizeof(node->text_length) + sizeof(node->number32) + sizeof(node->number16) + sizeof(char) * node->text_length;
 }
