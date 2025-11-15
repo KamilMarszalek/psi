@@ -5,4 +5,8 @@ RUN apt-get update && apt-get install -y cmake iproute2
 WORKDIR /cserver
 COPY . .
 RUN mkdir build && cd build && cmake .. && make
-ENTRYPOINT ["./build/server"]
+
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh", "./build/server"]

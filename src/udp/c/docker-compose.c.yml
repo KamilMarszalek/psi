@@ -12,6 +12,11 @@ services:
       z11_network:
         aliases:
           - cserver
+    environment:
+      - NETEM_ENABLED=${NETEM_ENABLED:-false}
+      - NETEM_DELAY=${NETEM_DELAY:-0ms}
+      - NETEM_JITTER=${NETEM_JITTER:-0ms}
+      - NETEM_LOSS=${NETEM_LOSS:-0%}
     command: ["8080"]
 
   cclient:
