@@ -5,6 +5,7 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,15 @@
 #define MSG_LEN 512
 #define TIMEOUT_SEC 0       // seconds
 #define TIMEOUT_USEC 750000 // microseconds
+
+static volatile sig_atomic_t stop_requested = 0;
+static volatile sig_atomic_t successful_packets = 0;
+static volatile sig_atomic_t total_packets = 0;
+
+static void on_signal(int signo) {
+  (void)signo;
+  stop_requested = 1;
+}
 
 void parse_args(int argc, char **argv, char **host, int *port) {
   if (argc < 3) {
@@ -103,6 +113,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
   }
 
   printf("Sent datagram with seq_bit: %u\n", seq_bit);
+  ++total_packets;
 
   Datagram *resp = NULL;
   ssize_t n;
@@ -120,6 +131,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
           free_datagram(d);
           exit(EXIT_FAILURE);
         }
+        ++total_packets;
         continue;
       } else {
         perror("recvfrom failed");
@@ -135,6 +147,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
 
     if (resp->seq_bit == seq_bit) {
       printf("Received correct ACK(%u)\n", resp->seq_bit);
+      ++successful_packets;
       break;
     } else {
       printf("Wrong ACK (expected %u, got %u), resending\n", seq_bit,
@@ -149,6 +162,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
         free_datagram(d);
         exit(EXIT_FAILURE);
       }
+      ++total_packets;
     }
   }
 
@@ -170,6 +184,9 @@ int main(int argc, char *argv[]) {
 
   int sockfd = create_udp_socket();
 
+  signal(SIGINT, on_signal);
+  signal(SIGTERM, on_signal);
+
   struct sockaddr_in server;
   resolve_host(host, port, &server);
 
@@ -181,7 +198,7 @@ int main(int argc, char *argv[]) {
   unsigned char seq_bit = 0;
   unsigned int packet_num = 1;
 
-  while (1) {
+  while (!stop_requested) {
     printf("\nSending packet %d with seq_bit=%u\n", packet_num, seq_bit);
 
     send_and_receive(sockfd, &server, MSG_LEN, seq_bit);
@@ -189,6 +206,10 @@ int main(int argc, char *argv[]) {
     seq_bit = 1 - seq_bit;
     packet_num = packet_num % 100 + 1;
   }
+
+  printf("\nShutdown requested");
+  printf("Total sent packets: %d\n", (int)total_packets);
+  printf("Successfuly sent packets: %d\n", (int)successful_packets);
 
   close(sockfd);
   return 0;
