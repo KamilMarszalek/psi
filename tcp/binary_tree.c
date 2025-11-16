@@ -1,12 +1,8 @@
 #include "binary_tree.h"
 #include "buffer.h"
 #include <arpa/inet.h>
-#include <netinet/in.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 
 static uint32_t node_size_serialized(const node_t* node);

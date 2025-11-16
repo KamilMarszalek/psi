@@ -2,7 +2,6 @@
 #define BINARY_TREE_H
 
 #include "buffer.h"
-#include <stddef.h>
 #include <stdint.h>
 
 typedef struct Node {

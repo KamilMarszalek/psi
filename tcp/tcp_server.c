@@ -1,17 +1,14 @@
 #include "binary_tree.h"
 #include "buffer.h"
-#include <netdb.h>
-#include <stddef.h>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <sys/socket.h>
-#include <sys/types.h>
-
-#include <netinet/in.h>
 #include <unistd.h>
+
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 #define PORT 18000
 #define N_CLIENTS 5
@@ -66,16 +63,10 @@ int main(int argc, char* argv[]) {
       if (n == 0) { break; }
       if (n < 0) {
         perror("receiving serialized tree");
-        free(buf);
         exit(EXIT_FAILURE);
       }
       received += n;
     }
     printf("Received tree ready to deserialize.\n\n");
-
-    buffer_t serialized_tree = {.data = buf, .offset = 0};
-    node_t* root = tree_deserialize_preorder(&serialized_tree);
-    printf("is this working?");
   }
-  return 0;
 }

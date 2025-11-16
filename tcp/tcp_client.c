@@ -1,34 +1,38 @@
 #include "binary_tree.h"
 #include "buffer.h"
-#include <arpa/inet.h>
-#include <netdb.h>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
 int main(int argc, char* argv[]) {
-  struct sockaddr_in server;
+  if (argc < 3) {}
+  struct sockaddr_in server_addr;
 
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock == -1) {
     perror("opening socket stream");
     exit(EXIT_FAILURE);
   }
+  printf("TCP client socket created.\n");
 
-  server.sin_family = AF_INET;
-  server.sin_addr.s_addr = inet_addr("127.0.0.1");
-  server.sin_port = htons(18000);
+  memset(&server_addr, 0, sizeof(server_addr));
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  server_addr.sin_port = htons(18000);
 
-  if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1) {
+  if (connect(sock, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
     perror("connecting to stream socket");
     exit(EXIT_FAILURE);
   };
+  printf("Connected to server socket.\n");
 
   srand(time(0));
   node_t* root = tree_create_random_inorder(0, 2500);
@@ -36,9 +40,9 @@ int main(int argc, char* argv[]) {
   uint32_t tree_size_n = htonl(tree_size);
   if (send(sock, &tree_size_n, sizeof(tree_size_n), 0) < 0) {
     perror("sending tree size");
-    tree_free(root);
     exit(EXIT_FAILURE);
   }
+  printf("Tree size (%u bytes) sent.\n", tree_size);
 
   uint8_t* buf = malloc(tree_size);
   buffer_t serialized_tree = {.data = buf, .offset = 0};
@@ -53,6 +57,7 @@ int main(int argc, char* argv[]) {
     }
     sent += n;
   }
+  printf("Serialized tree sent. Closing connection.\n");
 
   tree_free(root);
   free(buf);

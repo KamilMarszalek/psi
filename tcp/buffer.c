@@ -1,10 +1,9 @@
 
 #include "buffer.h"
-#include <stddef.h>
 #include <string.h>
 
 
-void buffer_write_bytes(buffer_t* buf, const void* src, const size_t len) {
+void buffer_write_bytes(buffer_t* buf, const void* src, size_t len) {
   memcpy(buf->data + buf->offset, src, len);
   buf->offset += len;
 }
