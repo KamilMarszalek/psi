@@ -17,6 +17,3 @@ target_link_libraries(client PRIVATE binary_tree buffer)
 
 add_executable(server tcp_server.c)
 target_link_libraries(server PRIVATE binary_tree buffer)
-
-target_include_directories(client PRIVATE ${CMAKE_SOURCE_DIR})
-
