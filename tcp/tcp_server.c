@@ -1,6 +1,7 @@
 #include "binary_tree.h"
 #include "buffer.h"
 
+#include <netinet/in.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,11 +11,9 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#define PORT 18000
-#define N_CLIENTS 5
-
 int main(int argc, char* argv[]) {
-  struct sockaddr_in server_addr;
+  int port = 0;
+  if (argc >= 2) { port = atoi(argv[1]); }
 
   int server_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (server_sock == -1) {
@@ -23,18 +22,25 @@ int main(int argc, char* argv[]) {
   }
   printf("TCP server socket created.\n");
 
+  struct sockaddr_in server_addr;
+  socklen_t length = sizeof(server_addr);
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_addr.sin_port = htons(PORT);
+  server_addr.sin_port = htons(port);
 
-  if (bind(server_sock, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
+  if (bind(server_sock, (struct sockaddr*) &server_addr, length) == -1) {
     perror("binding stream socket");
     exit(EXIT_FAILURE);
   }
-  printf("Bind to the port number %d.\n", PORT);
 
-  if (listen(server_sock, N_CLIENTS) == -1) {
+  if (getsockname(server_sock, (struct sockaddr*) &server_addr, &length) == -1) {
+    perror("getting socket name");
+    exit(EXIT_FAILURE);
+  }
+  printf("Bind to the port number %d.\n", ntohs(server_addr.sin_port));
+
+  if (listen(server_sock, 1) == -1) {
     perror("starting to listen");
     exit(EXIT_FAILURE);
   }
