@@ -2,9 +2,9 @@
 #include "buffer.h"
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <netinet/in.h>
@@ -12,10 +12,9 @@
 #include <sys/types.h>
 
 int main(int argc, char* argv[]) {
-  int sock;
   struct sockaddr_in server;
 
-  sock = socket(AF_INET, SOCK_STREAM, 0);
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock == -1) {
     perror("opening socket stream");
     exit(EXIT_FAILURE);
@@ -30,20 +29,31 @@ int main(int argc, char* argv[]) {
     exit(EXIT_FAILURE);
   };
 
-  node_t* root = node_new(1, 10, "a");
-  root->left = node_new(2, 20, "ab");
-  root->right = node_new(3, 30, "abc");
+  srand(time(0));
+  node_t* root = tree_create_random_inorder(0, 300);
   size_t tree_size = tree_calc_serialized_size(root);
-  printf("tree_size: %zu", tree_size);
+  if (send(sock, (const char*) &tree_size, tree_size, 0) < 0) {
+    perror("sending tree size");
+    tree_free(root);
+    exit(EXIT_FAILURE);
+  }
 
-  uint8_t data[tree_size];
-
-  buffer_t buf = {.data = data, .length = 0};
-
-  tree_serialize_preorder(root, &buf);
+  uint8_t* buf = malloc(tree_size);
+  buffer_t serialized_tree = {.data = buf, .length = 0};
+  tree_serialize_preorder(root, &serialized_tree);
+  size_t sent = 0;
+  while (sent < tree_size) {
+    ssize_t n = send(sock, serialized_tree.data + sent, serialized_tree.length - sent, 0);
+    if (n == 0) { break; }
+    if (n < 0) {
+      perror("sending serialized tree");
+      exit(EXIT_FAILURE);
+    }
+    sent += n;
+  }
 
   tree_free(root);
+  free(buf);
   close(sock);
-
   return 0;
 }
