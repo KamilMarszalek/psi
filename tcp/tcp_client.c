@@ -2,6 +2,7 @@
 #include "buffer.h"
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -30,20 +31,21 @@ int main(int argc, char* argv[]) {
   };
 
   srand(time(0));
-  node_t* root = tree_create_random_inorder(0, 300);
-  size_t tree_size = tree_calc_serialized_size(root);
-  if (send(sock, (const char*) &tree_size, tree_size, 0) < 0) {
+  node_t* root = tree_create_random_inorder(0, 2500);
+  uint32_t tree_size = tree_calc_serialized_size(root);
+  uint32_t tree_size_n = htonl(tree_size);
+  if (send(sock, &tree_size_n, sizeof(tree_size_n), 0) < 0) {
     perror("sending tree size");
     tree_free(root);
     exit(EXIT_FAILURE);
   }
 
   uint8_t* buf = malloc(tree_size);
-  buffer_t serialized_tree = {.data = buf, .length = 0};
+  buffer_t serialized_tree = {.data = buf, .offset = 0};
   tree_serialize_preorder(root, &serialized_tree);
   size_t sent = 0;
   while (sent < tree_size) {
-    ssize_t n = send(sock, serialized_tree.data + sent, serialized_tree.length - sent, 0);
+    ssize_t n = send(sock, serialized_tree.data + sent, tree_size - sent, 0);
     if (n == 0) { break; }
     if (n < 0) {
       perror("sending serialized tree");

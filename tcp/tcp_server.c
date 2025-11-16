@@ -1,3 +1,5 @@
+#include "binary_tree.h"
+#include "buffer.h"
 #include <netdb.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -49,17 +51,18 @@ int main(int argc, char* argv[]) {
     }
     printf("Client connected.\n");
 
-    size_t tree_size = 0;
-    if (recv(client_sock, &tree_size, sizeof(tree_size), MSG_WAITALL) < 0) {
+    uint32_t tree_size_n = 0;
+    if (recv(client_sock, &tree_size_n, sizeof(tree_size_n), MSG_WAITALL) < 0) {
       perror("receiving tree size");
       exit(EXIT_FAILURE);
     }
-    printf("Received tree size: %zu bytes.\n", tree_size);
+    uint32_t tree_size = ntohl(tree_size_n);
+    printf("Received tree size: %u bytes.\n", tree_size);
 
     uint8_t* buf = malloc(tree_size);
     size_t received = 0;
-    while (received < tree_size) {
-      ssize_t n = recv(client_sock, buf + received, tree_size - received, 0);
+    while (received < tree_size_n) {
+      ssize_t n = recv(client_sock, buf + received, tree_size_n - received, 0);
       if (n == 0) { break; }
       if (n < 0) {
         perror("receiving serialized tree");
@@ -69,6 +72,10 @@ int main(int argc, char* argv[]) {
       received += n;
     }
     printf("Received tree ready to deserialize.\n\n");
+
+    buffer_t serialized_tree = {.data = buf, .offset = 0};
+    node_t* root = tree_deserialize_preorder(&serialized_tree);
+    printf("is this working?");
   }
   return 0;
 }
