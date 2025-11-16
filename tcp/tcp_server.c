@@ -84,5 +84,8 @@ int main(int argc, char* argv[]) {
     printf("Successfully deserialized tree.\n");
     printf("First %d levels (level order):\n", 3);
     tree_print_level_order(root, 3);
+
+    tree_free(root);
+    free(buf);
   }
 }
