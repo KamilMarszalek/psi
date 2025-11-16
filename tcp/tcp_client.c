@@ -40,13 +40,18 @@ int main(int argc, char* argv[]) {
   server_addr.sin_port = htons(port);
 
   int r = inet_pton(AF_INET, host, &server_addr.sin_addr);
+  if (r < 0) {
+    perror("converting address to binary number");
+    exit(EXIT_FAILURE);
+  }
   if (r == 0) {
     printf("Resolving address via DNS: %s\n", host);
     struct addrinfo hints, *res;
+    memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     if (getaddrinfo(host, NULL, &hints, &res) != 0) {
-      perror("resolving address");
+      fprintf(stderr, "resolving address: unknown error");
       exit(EXIT_FAILURE);
     };
     struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
