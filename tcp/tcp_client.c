@@ -16,6 +16,7 @@
 #include <sys/types.h>
 
 #define SERVER_IP "127.0.0.1"
+#define N_NODES 2500
 
 int main(int argc, char* argv[]) {
   char* host = SERVER_IP;
@@ -63,17 +64,21 @@ int main(int argc, char* argv[]) {
     perror("connecting to stream socket");
     exit(EXIT_FAILURE);
   };
-  printf("Connected to server socket.\n");
+  printf("Connected to server socket.\n\n");
 
   srand(time(0));
-  node_t* root = tree_create_random_inorder(0, 2500);
+  node_t* root = tree_create_random(0, N_NODES);
+  printf("Created random binary tree composed of %d nodes.\n", N_NODES);
+  printf("First %d levels (level order):\n", 3);
+  tree_print_level_order(root, 3);
+
   uint32_t tree_size = tree_calc_serialized_size(root);
   uint32_t tree_size_n = htonl(tree_size);
   if (send(sock, &tree_size_n, sizeof(tree_size_n), 0) < 0) {
     perror("sending tree size");
     exit(EXIT_FAILURE);
   }
-  printf("Tree size (%u bytes) sent.\n", tree_size);
+  printf("\nTree size (%u bytes) sent.\n", tree_size);
 
   uint8_t* buf = malloc(tree_size);
   buffer_t serialized_tree = {.data = buf, .offset = 0};
@@ -81,7 +86,9 @@ int main(int argc, char* argv[]) {
   size_t sent = 0;
   while (sent < tree_size) {
     ssize_t n = send(sock, serialized_tree.data + sent, tree_size - sent, 0);
-    if (n == 0) { break; }
+    if (n == 0) {
+      break;
+    }
     if (n < 0) {
       perror("sending serialized tree");
       exit(EXIT_FAILURE);

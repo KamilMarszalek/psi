@@ -13,7 +13,9 @@
 
 int main(int argc, char* argv[]) {
   int port = 0;
-  if (argc >= 2) { port = atoi(argv[1]); }
+  if (argc >= 2) {
+    port = atoi(argv[1]);
+  }
 
   int server_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (server_sock == -1) {
@@ -44,7 +46,7 @@ int main(int argc, char* argv[]) {
     perror("starting to listen");
     exit(EXIT_FAILURE);
   }
-  printf("Listening...\n\n");
+  printf("Listening...\n");
 
   while (1) {
     int client_sock = accept(server_sock, NULL, NULL);
@@ -52,7 +54,7 @@ int main(int argc, char* argv[]) {
       perror("accepting connection");
       exit(EXIT_FAILURE);
     }
-    printf("Client connected.\n");
+    printf("\nClient connected.\n");
 
     uint32_t tree_size_n = 0;
     if (recv(client_sock, &tree_size_n, sizeof(tree_size_n), MSG_WAITALL) < 0) {
@@ -66,13 +68,21 @@ int main(int argc, char* argv[]) {
     size_t received = 0;
     while (received < tree_size_n) {
       ssize_t n = recv(client_sock, buf + received, tree_size_n - received, 0);
-      if (n == 0) { break; }
+      if (n == 0) {
+        break;
+      }
       if (n < 0) {
         perror("receiving serialized tree");
         exit(EXIT_FAILURE);
       }
       received += n;
     }
-    printf("Received tree ready to deserialize.\n\n");
+    printf("Received tree serialized tree.\n");
+
+    buffer_t serialized_tree = {.data = buf, .offset = 0};
+    node_t* root = tree_deserialize_preorder(&serialized_tree);
+    printf("Successfully deserialized tree.\n");
+    printf("First %d levels (level order):\n", 3);
+    tree_print_level_order(root, 3);
   }
 }
