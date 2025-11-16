@@ -1,6 +1,8 @@
+#define _GNU_SOURCE
 #include "binary_tree.h"
 #include "buffer.h"
 
+#include <netdb.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,12 +11,21 @@
 #include <unistd.h>
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#define SERVER_IP "127.0.0.1"
+
 int main(int argc, char* argv[]) {
-  if (argc < 3) {}
-  struct sockaddr_in server_addr;
+  char* host = SERVER_IP;
+  int port = 0;
+  if (argc < 3) {
+    fprintf(stderr, "address not specified");
+  } else {
+    host = argv[1];
+    port = atoi(argv[2]);
+  }
 
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock == -1) {
@@ -23,10 +34,25 @@ int main(int argc, char* argv[]) {
   }
   printf("TCP client socket created.\n");
 
+  struct sockaddr_in server_addr;
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  server_addr.sin_port = htons(18000);
+  server_addr.sin_port = htons(port);
+
+  int r = inet_pton(AF_INET, host, &server_addr.sin_addr);
+  if (r == 0) {
+    printf("Resolving address via DNS: %s\n", host);
+    struct addrinfo hints, *res;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host, NULL, &hints, &res) != 0) {
+      perror("resolving address");
+      exit(EXIT_FAILURE);
+    };
+    struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
+    server_addr.sin_addr = addr->sin_addr;
+    freeaddrinfo(res);
+  }
 
   if (connect(sock, (struct sockaddr*) &server_addr, sizeof(server_addr)) == -1) {
     perror("connecting to stream socket");
