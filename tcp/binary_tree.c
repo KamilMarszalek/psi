@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RAND_MAX_NUMBER32 (1 << 10)
+#define RAND_MAX_NUMBER16 (1 << 9)
+#define RAND_MAX_TEXT_SIZE (1 << 6)
+
 
 static int tree_height(const node_t* root);
 static void tree_print_level(const node_t* root, int level, int* n_node);
@@ -13,26 +17,27 @@ static void node_serialize(const node_t* node, buffer_t* buf);
 static node_t* node_deserialize(buffer_t* buf);
 static void generate_random_string(size_t n, char* str);
 
-
-node_t* node_new(const char* text, int32_t number32, int16_t number16) {
+node_t* node_new(node_data_t data) {
   node_t* node = malloc(sizeof(node_t));
   node->left = node->right = NULL;
-  node->text_length = strlen(text) + 1;
-  node->text = strdup(text);
-  node->number32 = number32;
-  node->number16 = number16;
+  node->text_length = strlen(data.text) + 1;
+  node->text = strdup(data.text);
+  node->number32 = data.number32;
+  node->number16 = data.number16;
   return node;
 }
 
-node_t* tree_create_random(int i, int n_nodes) {
+node_t* tree_create_random(int idx, int n_nodes) {
   node_t* root = NULL;
-  if (i < n_nodes) {
-    size_t text_size = rand() % 64 + 2;
+  if (idx < n_nodes) {
+    size_t text_size = (rand() % RAND_MAX_TEXT_SIZE) + 1;
     char text[text_size];
     generate_random_string(text_size, text);
-    root = node_new(text, rand() % (1 << 10), (short) (rand() % (1 << 9)));
-    root->left = tree_create_random(i * 2 + 1, n_nodes);
-    root->right = tree_create_random(i * 2 + 2, n_nodes);
+    root = node_new((node_data_t) {.text = text,
+                                   .number32 = rand() % RAND_MAX_NUMBER32,
+                                   .number16 = (short) (rand() % RAND_MAX_NUMBER16)});
+    root->left = tree_create_random((idx * 2) + 1, n_nodes);
+    root->right = tree_create_random((idx * 2) + 2, n_nodes);
   }
   return root;
 }
@@ -42,9 +47,9 @@ uint32_t tree_calc_serialized_size(const node_t* root) {
   if (root == NULL) {
     return root_size;
   }
-  uint32_t l = tree_calc_serialized_size(root->left);
-  uint32_t r = tree_calc_serialized_size(root->right);
-  return root_size + l + r;
+  uint32_t left_size = tree_calc_serialized_size(root->left);
+  uint32_t right_size = tree_calc_serialized_size(root->right);
+  return root_size + left_size + right_size;
 }
 
 void tree_serialize_preorder(const node_t* root, buffer_t* buf) {
@@ -90,9 +95,9 @@ int tree_height(const node_t* root) {
   if (root == NULL) {
     return 0;
   }
-  int l = tree_height(root->left);
-  int r = tree_height(root->right);
-  return 1 + (l > r ? l : r);
+  int left_height = tree_height(root->left);
+  int right_height = tree_height(root->right);
+  return 1 + (left_height > right_height ? left_height : right_height);
 }
 
 void tree_print_level(const node_t* root, int level, int* n_node) {
@@ -137,15 +142,15 @@ void node_serialize(const node_t* node, buffer_t* buf) {
 }
 
 node_t* node_deserialize(buffer_t* buf) {
-  uint8_t header;
+  uint8_t header = 0;
   buffer_read_bytes(buf, &header, sizeof(header));
   if (header == 0) {
     return NULL;
   }
 
-  uint32_t text_length_n;
-  uint32_t number32_n;
-  uint16_t number16_n;
+  uint32_t text_length_n = 0;
+  uint32_t number32_n = 0;
+  uint16_t number16_n = 0;
 
   buffer_read_bytes(buf, &text_length_n, sizeof(text_length_n));
   buffer_read_bytes(buf, &number32_n, sizeof(number32_n));
@@ -157,7 +162,7 @@ node_t* node_deserialize(buffer_t* buf) {
 
   char* text = malloc(text_length);
   buffer_read_bytes(buf, text, text_length);
-  node_t* root = node_new(text, number32, number16);
+  node_t* root = node_new((node_data_t) {.text = text, .number32 = number32, .number16 = number16});
   free(text);
   return root;
 }

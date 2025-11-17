@@ -63,17 +63,17 @@ int main(int argc, char* argv[]) {
     printf("Received tree size: %u bytes.\n", tree_size);
 
     uint8_t* buf = malloc(tree_size);
-    size_t received = 0;
-    while (received < tree_size_n) {
-      ssize_t n = recv(client_sock, buf + received, tree_size_n - received, 0);
-      if (n == 0) {
+    size_t total_received = 0;
+    while (total_received < tree_size_n) {
+      ssize_t received = recv(client_sock, buf + total_received, tree_size_n - total_received, 0);
+      if (received == 0) {
         break;
       }
-      if (n < 0) {
+      if (received < 0) {
         perror("receiving serialized tree");
         exit(EXIT_FAILURE);
       }
-      received += n;
+      total_received += received;
     }
     printf("Received tree serialized tree.\n");
 

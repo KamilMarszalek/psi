@@ -34,19 +34,19 @@ int main(int argc, char* argv[]) {
   }
   printf("TCP client socket created.\n");
 
-  struct sockaddr_in server_addr= {0};
+  struct sockaddr_in server_addr = {0};
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
 
-  int r = inet_pton(AF_INET, host, &server_addr.sin_addr);
-  if (r < 0) {
+  int res = inet_pton(AF_INET, host, &server_addr.sin_addr);
+  if (res < 0) {
     perror("converting address to binary number");
     exit(EXIT_FAILURE);
   }
-  if (r == 0) {
+  if (res == 0) {
     printf("Resolving address via DNS: %s\n", host);
     struct addrinfo hints = {0};
-    struct addrinfo *res;
+    struct addrinfo* res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -82,17 +82,17 @@ int main(int argc, char* argv[]) {
   uint8_t* buf = malloc(tree_size);
   buffer_t serialized_tree = {.data = buf, .offset = 0};
   tree_serialize_preorder(root, &serialized_tree);
-  size_t sent = 0;
-  while (sent < tree_size) {
-    ssize_t n = send(sock, serialized_tree.data + sent, tree_size - sent, 0);
-    if (n == 0) {
+  size_t total_sent = 0;
+  while (total_sent < tree_size) {
+    ssize_t sent = send(sock, serialized_tree.data + total_sent, tree_size - total_sent, 0);
+    if (sent == 0) {
       break;
     }
-    if (n < 0) {
+    if (sent < 0) {
       perror("sending serialized tree");
       exit(EXIT_FAILURE);
     }
-    sent += n;
+    total_sent += sent;
   }
   printf("Serialized tree sent. Closing connection.\n");
 
