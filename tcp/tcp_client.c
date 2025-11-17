@@ -3,7 +3,6 @@
 #include "buffer.h"
 
 #include <netdb.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,8 +34,7 @@ int main(int argc, char* argv[]) {
   }
   printf("TCP client socket created.\n");
 
-  struct sockaddr_in server_addr;
-  memset(&server_addr, 0, sizeof(server_addr));
+  struct sockaddr_in server_addr= {0};
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(port);
 
@@ -47,7 +45,8 @@ int main(int argc, char* argv[]) {
   }
   if (r == 0) {
     printf("Resolving address via DNS: %s\n", host);
-    struct addrinfo hints, *res;
+    struct addrinfo hints = {0};
+    struct addrinfo *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -66,7 +65,7 @@ int main(int argc, char* argv[]) {
   };
   printf("Connected to server socket.\n\n");
 
-  srand(time(0));
+  srand(time(NULL));
   node_t* root = tree_create_random(0, N_NODES);
   printf("Created random binary tree composed of %d nodes.\n", N_NODES);
   printf("First %d levels (level order):\n", 3);

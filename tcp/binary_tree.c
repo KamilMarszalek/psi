@@ -6,8 +6,8 @@
 #include <string.h>
 
 
-static int tree_height(node_t* root);
-static void tree_print_level(node_t* root, int level, int* n_node);
+static int tree_height(const node_t* root);
+static void tree_print_level(const node_t* root, int level, int* n_node);
 static uint32_t node_size_serialized(const node_t* node);
 static void node_serialize(const node_t* node, buffer_t* buf);
 static node_t* node_deserialize(buffer_t* buf);
@@ -24,15 +24,15 @@ node_t* node_new(const char* text, int32_t number32, int16_t number16) {
   return node;
 }
 
-node_t* tree_create_random(int i, int n) {
+node_t* tree_create_random(int i, int n_nodes) {
   node_t* root = NULL;
-  if (i < n) {
+  if (i < n_nodes) {
     size_t text_size = rand() % 64 + 2;
     char text[text_size];
     generate_random_string(text_size, text);
     root = node_new(text, rand() % (1 << 10), (short) (rand() % (1 << 9)));
-    root->left = tree_create_random(i * 2 + 1, n);
-    root->right = tree_create_random(i * 2 + 2, n);
+    root->left = tree_create_random(i * 2 + 1, n_nodes);
+    root->right = tree_create_random(i * 2 + 2, n_nodes);
   }
   return root;
 }
@@ -66,7 +66,7 @@ node_t* tree_deserialize_preorder(buffer_t* buf) {
   return root;
 }
 
-void tree_print_level_order(node_t* root, int n_levels) {
+void tree_print_level_order(const node_t* root, int n_levels) {
   int n_node = 0;
   int height = tree_height(root);
   for (int i = 0; i < (height > n_levels ? n_levels : height); ++i) {
@@ -86,7 +86,7 @@ void tree_free(node_t* root) {
 
 // -------------------------------
 
-int tree_height(node_t* root) {
+int tree_height(const node_t* root) {
   if (root == NULL) {
     return 0;
   }
@@ -95,7 +95,7 @@ int tree_height(node_t* root) {
   return 1 + (l > r ? l : r);
 }
 
-void tree_print_level(node_t* root, int level, int* n_node) {
+void tree_print_level(const node_t* root, int level, int* n_node) {
   if (root == NULL) {
     return;
   }
