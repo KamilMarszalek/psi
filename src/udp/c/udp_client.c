@@ -13,6 +13,8 @@
 
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE ((1 << 16) - 1)
+#define MAX_MESSAGE_LENGTH 66000
+#define MIN_MESSAGE_LENGTH 65000
 
 void parse_args(int argc, char **argv, char **host, int *port) {
   if (argc < 3) {
@@ -55,8 +57,7 @@ void resolve_host(const char *host, int port, struct sockaddr_in *server) {
 
     int err = getaddrinfo(host, NULL, &hints, &res);
     if (err != 0) {
-      fprintf(stderr, "DNS lookup failed for %s: %s\n", host,
-              gai_strerror(err));
+      printf("DNS lookup failed for %s: %s\n", host, gai_strerror(err));
       exit(EXIT_FAILURE);
     }
 
@@ -75,7 +76,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
 
   char *message = generate_bytes(msg_len);
   if (!message) {
-    fprintf(stderr, "failed to generate message of length %d\n", msg_len);
+    printf("failed to generate message of length %d\n", msg_len);
     exit(EXIT_FAILURE);
   }
 
@@ -86,7 +87,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
 
   if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)server,
              sizeof(*server)) < 0) {
-    fprintf(stderr, "failed to send datagram (length=%d)\n", d->length + 2);
+    printf("failed to send datagram (length=%d)\n", d->length + 2);
     free_datagram(d);
     free(packet);
     exit(EXIT_FAILURE);
@@ -95,8 +96,12 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
   if (n > 0) {
     Datagram *resp = from_bytes(recv_buffer, n);
     if (resp) {
-      printf("Received reply (%d bytes): \"%.*s\"\n", resp->length,
+      printf("Received reply (%d bytes): \"%.*s\"\n", resp->length + 2,
              resp->length, resp->content);
+      if (!are_datagrams_equal(d, resp)) {
+        printf("Mismatch between sent and received datagrams\n");
+        exit(EXIT_FAILURE);
+      }
       free_datagram(resp);
     }
   }
@@ -106,6 +111,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
 }
 
 int main(int argc, char *argv[]) {
+  printf("C UDP Client Starting...\n");
   char *host;
   int port;
 
@@ -116,7 +122,7 @@ int main(int argc, char *argv[]) {
   struct sockaddr_in server;
   resolve_host(host, port, &server);
 
-  for (int i = 65000; i < 66000; ++i) {
+  for (int i = MIN_MESSAGE_LENGTH; i < MAX_MESSAGE_LENGTH; ++i) {
     send_and_receive(sockfd, &server, i);
   }
 

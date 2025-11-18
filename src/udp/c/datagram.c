@@ -67,3 +67,10 @@ Datagram *from_bytes(const char *bytes, size_t size) {
   const char *content = bytes + sizeof(unsigned short);
   return create_datagram(length, content);
 }
+
+int are_datagrams_equal(const Datagram *d1, const Datagram *d2) {
+  if (d1->length != d2->length) {
+    return 0;
+  }
+  return memcmp(d1->content, d2->content, d1->length) == 0;
+}

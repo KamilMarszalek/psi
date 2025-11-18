@@ -65,12 +65,13 @@ void handle_echo(int sockfd) {
 
   Datagram *d = from_bytes(buffer, n);
   if (!d) {
-    fprintf(stderr, "Failed to parse datagram\n");
+    printf("Failed to parse datagram\n");
     return;
   }
 
-  printf("Received datagram (%d bytes): \"%.*s\"\n", d->length, d->length,
+  printf("Received datagram (%d bytes): \"%.*s\"\n", d->length + 2, d->length,
          d->content);
+  fflush(stdout);
   size_t out_size;
   char *reply = to_bytes(d, &out_size);
   sendto(sockfd, reply, out_size, 0, (struct sockaddr *)&client, client_len);
@@ -79,6 +80,7 @@ void handle_echo(int sockfd) {
 }
 
 int main(int argc, char *argv[]) {
+  printf("C UDP Server Starting...\n");
   int port = parse_port(argc, argv);
   int sockfd = create_udp_socket();
 

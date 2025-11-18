@@ -24,18 +24,28 @@ def create_udp_socket(port):
 
 def echo_loop(sock: socket.socket):
     while True:
-        data, addr = sock.recvfrom(BUFSIZE)
+        try:
+            data, addr = sock.recvfrom(BUFSIZE)
+        except OSError:
+            break
         if not data:
             continue
-
         d = Datagram.from_bytes(data)
+        print(
+            f'Received reply ({d.length + 2} bytes): "{d.content}"',
+            flush=True,
+        )
         sock.sendto(d.to_bytes(), addr)
 
 
 def main(args):
+    print("Python UDP Server Starting...")
+
     port = parse_port(args)
+
     with create_udp_socket(port) as s:
         echo_loop(s)
+    print("Socket closed, exiting.")
 
 
 if __name__ == "__main__":

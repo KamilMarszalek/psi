@@ -1,0 +1,108 @@
+services:
+
+  cserver_to_c:
+    build:
+      context: ./c
+      dockerfile: dockerfile.server
+    image: z11_cserver_udp
+    container_name: z11_cserver_to_c_udp
+    hostname: cserver_to_c
+    networks:
+      z11_network:
+        aliases: [cserver_to_c]
+    command: ["8080"]
+  
+  cserver_to_p:
+    build:
+      context: ./c
+      dockerfile: dockerfile.server
+    image: z11_cserver_udp
+    container_name: z11_cserver_to_p_udp
+    hostname: cserver_to_p
+    networks:
+      z11_network:
+        aliases: [cserver_to_p]
+    command: ["8080"]
+
+  pserver_to_c:
+    build:
+      context: ./python
+      dockerfile: dockerfile.server
+    image: z11_pserver_udp
+    container_name: z11_pserver_to_c_udp
+    hostname: pserver_to_c
+    networks:
+      z11_network:
+        aliases: [pserver_to_c]
+    command: ["8000"]
+  
+  pserver_to_p:
+    build:
+      context: ./python
+      dockerfile: dockerfile.server
+    image: z11_pserver_udp
+    container_name: z11_pserver_to_p_udp
+    hostname: pserver_to_p
+    networks:
+      z11_network:
+        aliases: [pserver_to_p]
+    command: ["8000"]
+
+
+  cclient_to_c:
+    build:
+      context: ./c
+      dockerfile: dockerfile.client
+    image: z11_cclient_udp
+    container_name: z11_cclient_to_c_udp
+    hostname: cclient_to_c
+    networks:
+      z11_network:
+        aliases: [cclient_to_c]
+    command: ["cserver_to_c", "8080"]
+    depends_on: [cserver_to_c]
+
+  cclient_to_p:
+    build:
+      context: ./c
+      dockerfile: dockerfile.client
+    image: z11_cclient_udp
+    container_name: z11_cclient_to_p_udp
+    hostname: cclient_to_p
+    networks:
+      z11_network:
+        aliases: [cclient_to_p]
+    command: ["pserver_to_c", "8000"]
+    depends_on: [pserver_to_c]
+
+
+  pclient_to_c:
+    build:
+      context: ./python
+      dockerfile: dockerfile.client
+    image: z11_pclient_udp
+    container_name: z11_pclient_to_c_udp
+    hostname: pclient_to_c
+    networks:
+      z11_network:
+        aliases: [pclient_to_c]
+    command: ["cserver_to_p", "8080"]
+    depends_on: [cserver_to_p]
+
+  pclient_to_p:
+    build:
+      context: ./python
+      dockerfile: dockerfile.client
+    image: z11_pclient_udp
+    container_name: z11_pclient_to_p_udp
+    hostname: pclient_to_p
+    networks:
+      z11_network:
+        aliases: [pclient_to_p]
+    command: ["pserver_to_p", "8000"]
+    depends_on: [pserver_to_p]
+
+
+networks:
+  z11_network:
+    external: true

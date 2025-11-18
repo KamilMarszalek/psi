@@ -25,7 +25,6 @@ def create_udp_socket():
 
 
 def send_one_datagram(sock, host, port, length):
-    """Send one datagram and return received datagram (or None)."""
     outgoing = Datagram(length, get_bytes(length))
     outgoing_bytes = outgoing.to_bytes()
 
@@ -36,7 +35,7 @@ def send_one_datagram(sock, host, port, length):
 
     if incoming != outgoing:
         raise ValueError("Received datagram mismatch!")
-
+    print(f'Received reply ({incoming.length + 2} bytes): "{incoming.content}"')
     return incoming
 
 
@@ -45,12 +44,16 @@ def run_test_datagrams(sock, host, port, start, stop, step):
         try:
             send_one_datagram(sock, host, port, length)
             # print(f"OK len={length}")
+        except OSError as e:
+            print("Datagram too big to be sent, length", length + 2, "->", e)
+            break
         except Exception as e:
             print("ERROR at length", length, "->", e)
             break
 
 
 def main(args):
+    print("Python UDP Client Starting...")
     host, port = parse_args(args)
     print("Will send to", host, ":", port)
 
