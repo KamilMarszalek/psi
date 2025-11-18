@@ -19,8 +19,11 @@
 #define TIMEOUT_SEC 0       // seconds
 #define TIMEOUT_USEC 750000 // microseconds
 
+typedef enum { RETRANSMIT_ENABLED = 1, RETRANSMIT_DISABLED = 0 } RetransmitMode;
+
 int stop_requested = 0;
 int successful_packets = 0;
+int failed_packets = 0;
 int total_packets = 0;
 
 static void on_signal(int signo) {
@@ -84,8 +87,10 @@ void resolve_host(const char *host, int port, struct sockaddr_in *server) {
   exit(EXIT_FAILURE);
 }
 
-void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
-                      unsigned char seq_bit, unsigned short packet_num) {
+void send_and_receive(
+        int sockfd, struct sockaddr_in* server, int msg_len, unsigned char seq_bit, unsigned short packet_num,
+        RetransmitMode retransmit_mode
+) {
   char recv_buffer[BUFFER_SIZE];
 
   char *message = generate_bytes(msg_len);
@@ -123,16 +128,21 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
 
     if (n < 0) {
       if (errno == EAGAIN) {
-        printf("Timeout, resending datagram with seq_bit: '%u'\n", seq_bit);
+        if (retransmit_mode == RETRANSMIT_ENABLED) {
+          printf("Timeout, resending datagram with seq_bit: '%u'\n", seq_bit);
 
-        if (sendto(sockfd, packet, packet_size, 0,
-                   (const struct sockaddr *)server, sizeof(*server)) < 0) {
-          free(packet);
-          free_datagram(d);
-          exit(EXIT_FAILURE);
+          if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr*) server, sizeof(*server)) < 0) {
+            free(packet);
+            free_datagram(d);
+            exit(EXIT_FAILURE);
+          }
+          ++total_packets;
+          continue;
+        } else {
+          printf("Timeout, no retransmission (packet lost)\n");
+          ++failed_packets;
+          break;
         }
-        ++total_packets;
-        continue;
       } else {
         perror("recvfrom failed");
         break;
@@ -150,26 +160,30 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
       ++successful_packets;
       break;
     } else {
-      printf("Wrong ACK (expected %u, got %u), resending\n", seq_bit,
-             resp->header.seq_bit);
+      printf("Wrong ACK (expected %u, got %u)", seq_bit, resp->header.seq_bit);
       free_datagram(resp);
       resp = NULL;
 
-      if (sendto(sockfd, packet, packet_size, 0,
-                 (const struct sockaddr *)server, sizeof(*server)) < 0) {
-        perror("failed to resend datagram");
-        free(packet);
-        free_datagram(d);
-        exit(EXIT_FAILURE);
+      if (retransmit_mode == RETRANSMIT_ENABLED) {
+        printf(", resending\n");
+        if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr*) server, sizeof(*server)) < 0) {
+          perror("failed to resend datagram");
+          free(packet);
+          free_datagram(d);
+          exit(EXIT_FAILURE);
+        }
+        ++total_packets;
+      } else {
+        printf(", no retransmission\n");
+        ++failed_packets;
+        break;
       }
-      ++total_packets;
     }
   }
 
   if (resp) {
-    printf("Received reply (seq_bit %u, packet_num: %d): \"%.*s\"\n",
-           resp->header.seq_bit, resp->header.packet_num, resp->length,
-           resp->content);
+    printf("Received reply (seq_bit %u, packet_num: %d): \"%.*s\"\n", resp->header.seq_bit, resp->header.packet_num,
+           resp->length, resp->content);
     free_datagram(resp);
   }
 
@@ -177,8 +191,8 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len,
   free_datagram(d);
 }
 
-int main(int argc, char *argv[]) {
-  char *host;
+int main(int argc, char* argv[]) {
+  char* host;
   int port;
 
   parse_args(argc, argv, &host, &port);
@@ -199,6 +213,10 @@ int main(int argc, char *argv[]) {
   unsigned char seq_bit = 0;
   unsigned short packet_count = 30;
 
+  RetransmitMode mode = RETRANSMIT_ENABLED;
+
+  printf("Running in %s mode\n\n", mode == RETRANSMIT_ENABLED ? "RETRANSMIT_ENABLED" : "RETRANSMIT_DISABLED");
+
   for (unsigned short i = 0; i < packet_count; ++i) {
     if (stop_requested) {
       break;
@@ -206,13 +224,17 @@ int main(int argc, char *argv[]) {
 
     printf("\nSending packet %d with seq_bit=%u\n", i + 1, seq_bit);
 
-    send_and_receive(sockfd, &server, MSG_LEN, seq_bit, i + 1);
+    send_and_receive(sockfd, &server, MSG_LEN, seq_bit, i + 1, mode);
 
     seq_bit = 1 - seq_bit;
   }
 
   printf("\nTotal sent packets: %d\n", total_packets);
-  printf("Successfuly sent packets: %d\n", successful_packets);
+  printf("Successfully delivered packets: %d\n", successful_packets);
+  printf("Failed packets: %d\n", failed_packets);
+  if (mode == RETRANSMIT_ENABLED) {
+    printf("Retransmissions: %d\n", total_packets - packet_count);
+  }
 
   close(sockfd);
   return 0;
