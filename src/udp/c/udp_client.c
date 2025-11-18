@@ -75,7 +75,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
 
   char *message = generate_bytes(msg_len);
   if (!message) {
-    perror("message generation failed");
+    fprintf(stderr, "failed to generate message of length %d\n", msg_len);
     exit(EXIT_FAILURE);
   }
 
@@ -87,6 +87,8 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
   if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)server,
              sizeof(*server)) < 0) {
     fprintf(stderr, "failed to send datagram (length=%d)\n", d->length + 2);
+    free_datagram(d);
+    free(packet);
     exit(EXIT_FAILURE);
   }
   ssize_t n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
