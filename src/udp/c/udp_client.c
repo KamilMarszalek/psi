@@ -96,7 +96,7 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
   if (n > 0) {
     Datagram *resp = from_bytes(recv_buffer, n);
     if (resp) {
-      printf("Received reply (%d bytes): \"%.*s\"\n", resp->length + 2,
+      printf("Received datagram (%d bytes): \"%.*s\"\n", resp->length + 2,
              resp->length, resp->content);
       if (!are_datagrams_equal(d, resp)) {
         printf("Mismatch between sent and received datagrams\n");

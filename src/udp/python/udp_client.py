@@ -35,7 +35,9 @@ def send_one_datagram(sock, host, port, length):
 
     if incoming != outgoing:
         raise ValueError("Received datagram mismatch!")
-    print(f'Received reply ({incoming.length + 2} bytes): "{incoming.content}"')
+    print(
+        f'Received datagram ({incoming.length + 2} bytes): "{incoming.content.decode("ascii")}"',
+    )
     return incoming
 
 
