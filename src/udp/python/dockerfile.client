@@ -1,4 +1,4 @@
 FROM python:3
 COPY . /pclient/
 WORKDIR /pclient
-CMD ["python", "udp_client.py"]
+ENTRYPOINT ["python", "udp_client.py"]

@@ -1,0 +1,32 @@
+services:
+  cserver:
+    build:
+      context: .
+      dockerfile: dockerfile.server
+    image: z11_pserver_udp
+    container_name: z11_pserver_udp
+    hostname: pserver
+    networks:
+      z11_network:
+        aliases:
+          - pserver
+    command: ["8080"]
+
+  cclient:
+    build:
+      context: .
+      dockerfile: dockerfile.client
+    image: z11_pclient_udp
+    container_name: z11_pclient_udp
+    hostname: pclient
+    networks:
+      z11_network:
+        aliases:
+          - pclient
+    command: ["pserver", "8080"]
+    depends_on:
+      - pserver
+
+networks:
+  z11_network:
+    external: true

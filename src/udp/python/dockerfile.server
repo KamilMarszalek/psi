@@ -1,4 +1,4 @@
 FROM python:3
 COPY . /pserver/
 WORKDIR /pserver
-CMD ["python", "udp_server.py"]
+ENTRYPOINT ["python", "udp_server.py"]
