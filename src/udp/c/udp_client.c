@@ -16,8 +16,8 @@
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE ((1 << 16) - 1)
 #define MSG_LEN 512
-#define TIMEOUT_SEC 0      // seconds
-#define TIMEOUT_USEC 750000// microseconds
+#define TIMEOUT_SEC 1      // seconds
+#define TIMEOUT_USEC 500000// microseconds
 
 typedef enum { RETRANSMIT_ENABLED = 1, RETRANSMIT_DISABLED = 0 } RetransmitMode;
 
