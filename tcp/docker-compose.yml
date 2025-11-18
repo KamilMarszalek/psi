@@ -1,0 +1,23 @@
+services:
+  tcp_server:
+    build:
+      dockerfile: dockerfile.server
+    image: z11_tcp_server
+    container_name: z11_tcp_server
+    networks:
+      z11_network:
+        aliases: [server_network]
+    command: ["8080"]
+
+  tcp_client:
+    build:
+      dockerfile: dockerfile.client
+    image: z11_tcp_client
+    container_name: z11_tcp_client
+    networks:
+      z11_network:
+    command: ["server_network", "8080"]
+    depends_on: [tcp_server]
+
+networks:
+  z11_network:
