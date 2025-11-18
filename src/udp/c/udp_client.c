@@ -159,11 +159,12 @@ void send_and_receive(
       break;
     } else {
       printf("Wrong ACK (expected %u, got %u)", seq_bit, resp->header.seq_bit);
-      free_datagram(resp);
-      resp = NULL;
 
       if (retransmit_mode == RETRANSMIT_ENABLED) {
         printf(", resending\n");
+        free_datagram(resp);
+        resp = NULL;
+
         if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr*) server, sizeof(*server)) < 0) {
           perror("failed to resend datagram");
           free(packet);
@@ -174,6 +175,8 @@ void send_and_receive(
       } else {
         printf(", packet_num: %u - no retransmission\n", resp->header.packet_num);
         ++successful_packets;
+        free_datagram(resp);
+        resp = NULL;
         break;
       }
     }
