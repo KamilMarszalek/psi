@@ -16,8 +16,8 @@
 #define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE ((1 << 16) - 1)
 #define MSG_LEN 512
-#define TIMEOUT_SEC 0       // seconds
-#define TIMEOUT_USEC 750000 // microseconds
+#define TIMEOUT_SEC 0      // seconds
+#define TIMEOUT_USEC 750000// microseconds
 
 typedef enum { RETRANSMIT_ENABLED = 1, RETRANSMIT_DISABLED = 0 } RetransmitMode;
 
@@ -27,11 +27,11 @@ int failed_packets = 0;
 int total_packets = 0;
 
 static void on_signal(int signo) {
-  (void)signo;
+  (void) signo;
   stop_requested = 1;
 }
 
-void parse_args(int argc, char **argv, char **host, int *port) {
+void parse_args(int argc, char** argv, char** host, int* port) {
   if (argc < 3) {
     *host = SERVER_IP;
     *port = 0;
@@ -50,7 +50,7 @@ int create_udp_socket(void) {
   return sockfd;
 }
 
-void resolve_host(const char *host, int port, struct sockaddr_in *server) {
+void resolve_host(const char* host, int port, struct sockaddr_in* server) {
   memset(server, 0, sizeof(*server));
   server->sin_family = AF_INET;
   server->sin_port = htons(port);
@@ -72,12 +72,11 @@ void resolve_host(const char *host, int port, struct sockaddr_in *server) {
 
     int err = getaddrinfo(host, NULL, &hints, &res);
     if (err != 0) {
-      fprintf(stderr, "DNS lookup failed for %s: %s\n", host,
-              gai_strerror(err));
+      fprintf(stderr, "DNS lookup failed for %s: %s\n", host, gai_strerror(err));
       exit(EXIT_FAILURE);
     }
 
-    struct sockaddr_in *addr = (struct sockaddr_in *)res->ai_addr;
+    struct sockaddr_in* addr = (struct sockaddr_in*) res->ai_addr;
     server->sin_addr = addr->sin_addr;
     freeaddrinfo(res);
     return;
@@ -93,24 +92,23 @@ void send_and_receive(
 ) {
   char recv_buffer[BUFFER_SIZE];
 
-  char *message = generate_bytes(msg_len);
+  char* message = generate_bytes(msg_len);
   if (!message) {
     perror("message generation failed");
     exit(EXIT_FAILURE);
   }
 
-  Datagram *d = create_datagram(seq_bit, packet_num, msg_len, message);
+  Datagram* d = create_datagram(seq_bit, packet_num, msg_len, message);
 
   size_t packet_size;
-  char *packet = to_bytes(d, &packet_size);
+  char* packet = to_bytes(d, &packet_size);
   if (!packet) {
     perror("to_bytes failed");
     free_datagram(d);
     exit(EXIT_FAILURE);
   }
 
-  if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr *)server,
-             sizeof(*server)) < 0) {
+  if (sendto(sockfd, packet, packet_size, 0, (const struct sockaddr*) server, sizeof(*server)) < 0) {
     perror("failed to send datagram");
     free(packet);
     free_datagram(d);
@@ -120,7 +118,7 @@ void send_and_receive(
   printf("Sent datagram with seq_bit: %u\n", seq_bit);
   ++total_packets;
 
-  Datagram *resp = NULL;
+  Datagram* resp = NULL;
   ssize_t n;
 
   while (1) {
