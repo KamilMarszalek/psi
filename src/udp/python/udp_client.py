@@ -29,6 +29,9 @@ def send_one_datagram(sock, host, port, length):
     outgoing_bytes = outgoing.to_bytes()
 
     sock.sendto(outgoing_bytes, (host, port))
+    print(
+        f"Sent datagram ({outgoing.length + 2} bytes)",
+    )
     data, _ = sock.recvfrom(outgoing.datagram_length)
 
     incoming = Datagram.from_bytes(data)
@@ -36,7 +39,7 @@ def send_one_datagram(sock, host, port, length):
     if incoming != outgoing:
         raise ValueError("Received datagram mismatch!")
     print(
-        f'Received datagram ({incoming.length + 2} bytes): "{incoming.content.decode("ascii")}"',
+        f"Received datagram ({incoming.length + 2} bytes)",
     )
     return incoming
 
@@ -45,7 +48,6 @@ def run_test_datagrams(sock, host, port, start, stop, step):
     for length in range(start, stop, step):
         try:
             send_one_datagram(sock, host, port, length)
-            # print(f"OK len={length}")
         except OSError as e:
             print("Datagram too big to be sent, length", length + 2, "->", e)
             break

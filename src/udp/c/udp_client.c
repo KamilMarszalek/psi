@@ -92,12 +92,12 @@ void send_and_receive(int sockfd, struct sockaddr_in *server, int msg_len) {
     free(packet);
     exit(EXIT_FAILURE);
   }
+  printf("Sent datagram (%d bytes)\n", d->length + 2);
   ssize_t n = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, NULL, NULL);
   if (n > 0) {
     Datagram *resp = from_bytes(recv_buffer, n);
     if (resp) {
-      printf("Received datagram (%d bytes): \"%.*s\"\n", resp->length + 2,
-             resp->length, resp->content);
+      printf("Received datagram (%d bytes)\n", resp->length + 2);
       if (!are_datagrams_equal(d, resp)) {
         printf("Mismatch between sent and received datagrams\n");
         exit(EXIT_FAILURE);

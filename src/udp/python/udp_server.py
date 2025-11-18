@@ -32,10 +32,14 @@ def echo_loop(sock: socket.socket):
             continue
         d = Datagram.from_bytes(data)
         print(
-            f'Received datagram ({d.length + 2} bytes): "{d.content.decode("ascii")}"',
+            f"Received datagram ({d.length + 2} bytes)",
             flush=True,
         )
         sock.sendto(d.to_bytes(), addr)
+        print(
+            f"Sent datagram ({d.length + 2} bytes)",
+            flush=True,
+        )
 
 
 def main(args):

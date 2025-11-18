@@ -69,12 +69,12 @@ void handle_echo(int sockfd) {
     return;
   }
 
-  printf("Received datagram (%d bytes): \"%.*s\"\n", d->length + 2, d->length,
-         d->content);
+  printf("Received datagram (%d bytes)\n", d->length + 2);
   fflush(stdout);
   size_t out_size;
   char *reply = to_bytes(d, &out_size);
   sendto(sockfd, reply, out_size, 0, (struct sockaddr *)&client, client_len);
+  printf("Sent datagram (%zu bytes)\n", out_size);
   free(reply);
   free_datagram(d);
 }
