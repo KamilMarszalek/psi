@@ -96,9 +96,10 @@ int main(int argc, char* argv[]) {
 
     buffer_t serialized_tree = {.data = buf, .offset = 0};
     node_t* root = tree_deserialize_preorder(&serialized_tree);
-    printf("Successfully deserialized tree.\n");
+    printf("Successfully deserialized tree.\n\n");
     printf("First %d levels (level order):\n", 3);
     tree_print_level_order(root, 3);
+    fflush(stdout);
 
     tree_free(root);
     free(buf);
