@@ -15,9 +15,10 @@ services:
     image: z11_tcp_client
     container_name: z11_tcp_client
     networks:
-      z11_network:
+      - z11_network
     command: ["server_network", "8080"]
     depends_on: [tcp_server]
 
 networks:
   z11_network:
+    external: true
