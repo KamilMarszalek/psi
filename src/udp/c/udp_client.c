@@ -172,8 +172,8 @@ void send_and_receive(
         }
         ++total_packets;
       } else {
-        printf(", no retransmission\n");
-        ++failed_packets;
+        printf(", packet_num: %u - no retransmission\n", resp->header.packet_num);
+        ++successful_packets;
         break;
       }
     }
