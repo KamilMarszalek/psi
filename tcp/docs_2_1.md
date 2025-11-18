@@ -55,7 +55,7 @@ Komunikacja TCP pomiędzy klientem a serwerem odbywa się w dwóch etapach:
 1. Klient przelicza ile bajtów zajmie całe zbuforowane drzewo, a następnie przesyła tę informację (jedna liczba całkowita, o rozmiarze 32 bitów) serwerowi, dzięki czemu może on zaalokować odpowiednią ilość pamięci na całą strukturę.
 2. Klient przesyła kolejne bajty w pętli tak długo, aż nie prześle tylu, ile zajmuje całe drzewo. W tym celu wykorzystywane są wartości zwracane z funkcji *send*, mówiące o tym, jak dużo bajtów zostało przesłane.
 
-Serwer działa tak długo, jak nie otrzyma sygnału kończącego (w nieskończonej pętli odbiera kolejne drzewa pochodzące z różnych źródeł). Klient natomiast po wysłaniu drzewa zamyka gniazdo, zwalania pamięc i kończy działanie.
+Serwer działa tak długo, jak nie otrzyma sygnału kończącego (w nieskończonej pętli odbiera kolejne drzewa pochodzące z różnych źródeł). Klient natomiast po wysłaniu drzewa zamyka gniazdo, zwalania pamięć i kończy działanie.
 
 ## Opis konfiguracji sieciowej
 Do konfiguracji sieciowej wykorzystano środowisko Docker Comopse - zdefiniowano odpowiednie kontenery (wykorzystujące standardowe obrazy *gcc*), zarówno dla klienta jak i serwera. Oba działają w sieci dockerowej **z11_network** na serwerze **bigubu**. W przypadku konfiguracji serwera dla sieci zdefniowano alias, dzięki takiemu roziwązaniu klient może łatwiej odnaleźć serwer wykorzystując domenę (resolver DNS). Serwer działa na porcie 8080.
@@ -73,12 +73,13 @@ services:
   tcp_client:
   ...
     networks:
-      z11_network:
+      - z11_network
     command: ["server_network", "8080"]
     depends_on: [tcp_server]
 
 networks:
   z11_network:
+   external: true
 ```
 ## Testowanie
 W celu przetestowania rozwiązania klient tworzy duże, losowe i zrównoważone drzewo składające się z około 3000 węzłów. Taka struktura jest stosunkowo duża, ma więcej niż 100KB. Jest ono przesyłane po TCP zgodnie z opisem znajdującym się wyżej. Następnie, zarówno po stronie klienta jak i serwera, na standardowe wyjście są drukowane 3 pierwsze poziomy drzewa (cała struktura byłaby zbyt duża) w kolejności level-order - pozwala to ocenić poprawność komunikacji.
