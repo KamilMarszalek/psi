@@ -1,7 +1,8 @@
 import socket
 import sys
-from datagram import Datagram
+
 from bytes_generator import get_bytes
+from datagram import Datagram
 
 HOST = "127.0.0.1"
 PORT = 8000

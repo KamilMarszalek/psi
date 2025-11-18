@@ -1,5 +1,6 @@
 import socket
 import sys
+
 from datagram import Datagram
 
 HOST = "0.0.0.0"
