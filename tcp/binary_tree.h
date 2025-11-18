@@ -7,8 +7,8 @@
 typedef struct Node {
   struct Node* left;
   struct Node* right;
-  uint32_t text_length;
   char* text;
+  uint32_t text_length;
   int32_t number32;
   int16_t number16;
 } node_t;
