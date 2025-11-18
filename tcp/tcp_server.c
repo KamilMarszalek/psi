@@ -2,12 +2,18 @@
 #include "buffer.h"
 
 #include <netinet/in.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <sys/socket.h>
+
+volatile sig_atomic_t is_running = 1;
+void handle_signal(int sig) {
+  is_running = 0;
+}
 
 int main(int argc, char* argv[]) {
   int port = 0;
@@ -46,24 +52,29 @@ int main(int argc, char* argv[]) {
   }
   printf("Listening...\n");
 
-  while (1) {
+  signal(SIGINT, handle_signal);
+  signal(SIGTERM, handle_signal);
+
+  while (is_running) {
     int client_sock = accept(server_sock, NULL, NULL);
     if (client_sock == -1) {
       perror("accepting connection");
-      exit(EXIT_FAILURE);
+      continue;
     }
     printf("\nClient connected.\n");
 
     uint32_t tree_size_n = 0;
     if (recv(client_sock, &tree_size_n, sizeof(tree_size_n), MSG_WAITALL) < 0) {
       perror("receiving tree size");
-      exit(EXIT_FAILURE);
+      close(client_sock);
+      continue;
     }
     uint32_t tree_size = ntohl(tree_size_n);
     printf("Received tree size: %u bytes.\n", tree_size);
 
     uint8_t* buf = malloc(tree_size);
     size_t total_received = 0;
+    int error_occured = 0;
     while (total_received < tree_size_n) {
       ssize_t received = recv(client_sock, buf + total_received, tree_size_n - total_received, 0);
       if (received == 0) {
@@ -71,9 +82,15 @@ int main(int argc, char* argv[]) {
       }
       if (received < 0) {
         perror("receiving serialized tree");
-        exit(EXIT_FAILURE);
+        error_occured = 1;
+        break;
       }
       total_received += received;
+    }
+    if (error_occured) {
+      free(buf);
+      close(client_sock);
+      continue;
     }
     printf("Received tree serialized tree.\n");
 
@@ -85,5 +102,7 @@ int main(int argc, char* argv[]) {
 
     tree_free(root);
     free(buf);
+    close(client_sock);
   }
+  printf("\nShutdown requested - stopping server.\n");
 }

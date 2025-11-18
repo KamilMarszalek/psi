@@ -15,7 +15,7 @@
 #include <sys/types.h>
 
 #define SERVER_IP "127.0.0.1"
-#define N_NODES 2500
+#define N_NODES 3000
 
 int main(int argc, char* argv[]) {
   char* host = SERVER_IP;
