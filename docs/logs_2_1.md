@@ -1,3 +1,4 @@
+<!--
 ---
 title: "PSI - Zadanie 2.1a Logi"
 author:
@@ -8,6 +9,7 @@ date: "2025-11-18"
 subtitle: "Zespół Z11"
 version: "1.0"
 ---
+-->
 
 # Zadanie 2.1a
 

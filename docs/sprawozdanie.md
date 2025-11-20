@@ -1,3 +1,4 @@
+<!--
 ---
 title: "PSI - Programowanie Systemów i Sieci - Laboratorium"
 author:
@@ -8,6 +9,7 @@ date: "2025-11-18"
 subtitle: "Zespół Z11"
 version: "1.0"
 ---
+-->
 
 # Zadanie 1.1
 
